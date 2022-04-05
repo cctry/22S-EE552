@@ -1,4 +1,4 @@
-package org.openjfx.hellofx;
+package edu.stevens.spreadSheet;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -17,7 +17,8 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("primary"));
+        stage.setTitle("SpreedSheet");
+        scene = new Scene(loadFXML("main"));
         scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
         stage.setScene(scene);
         stage.show();
