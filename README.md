@@ -1,3 +1,3 @@
 # 22S-EE552
-Run 'Hello World' example
+Run 
 > mvn clean javafx:run
