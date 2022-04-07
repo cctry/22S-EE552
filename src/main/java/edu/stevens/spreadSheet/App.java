@@ -5,11 +5,10 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Tab;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * JavaFX App
@@ -26,14 +25,10 @@ public class App extends Application {
         Parent root = fxmlLoader.load();
         this.tableController = fxmlLoader.getController();
         scene = new Scene(root);
-        scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles.css")).toExternalForm());
         stage.setScene(scene);
-
+        stage.setMaximized(true);
         stage.show();
-    }
-
-    public void setTableController(TableController controller) {
-        this.tableController = controller;
     }
 
     public static void main(String[] args) {

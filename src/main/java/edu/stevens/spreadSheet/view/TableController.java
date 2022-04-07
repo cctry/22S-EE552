@@ -1,12 +1,13 @@
 package edu.stevens.spreadSheet.view;
 
 import edu.stevens.spreadSheet.model.TableRow;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
 import javafx.fxml.FXML;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 
 class ColumnLabelGenerator {
     static String generate(int index) {
@@ -28,7 +29,7 @@ public class TableController {
     private TableView<TableRow> table;
 
 
-    TableColumn<TableRow, ?> getColumn(int index) {
+    private TableColumn<TableRow, ?> getColumn(int index) {
         return table.getColumns().get(index);
     }
 
@@ -39,7 +40,7 @@ public class TableController {
     private void addColumn(String name, int index) {
         var column = new TableColumn<TableRow, String>(name);
         column.setCellValueFactory(p -> p.getValue().getCell(index).getValueStringProperty());
-        column.setCellFactory(TextFieldTableCell.forTableColumn());
+        column.setCellFactory(p -> new EditableStringTableCell<>());
         column.setOnEditCommit((TableColumn.CellEditEvent<TableRow, String> t) -> {
                     int row_id = t.getTablePosition().getRow();
                     int col_id = t.getTablePosition().getColumn();
@@ -68,8 +69,8 @@ public class TableController {
         // add all cells from tableRows
         this.table.setItems(this.tableRows);
         this.table.setEditable(true);
-
-
+        // config table
+        this.table.getSelectionModel().setCellSelectionEnabled(true);
     }
 
     public void setCell(int row_id, int col_id, String content) {
@@ -83,4 +84,106 @@ public class TableController {
     public ObservableList<TableRow> getTableRows() {
         return this.tableRows;
     }
+}
+
+
+class EditableStringTableCell<T> extends TableCell<T, String> {
+    protected TextField textField;
+    protected final ChangeListener<? super Boolean> changeListener = (obs, ov, nv) -> {
+        if (!nv) {
+            commitEdit(textField.getText());
+        }
+    };
+
+    public EditableStringTableCell() {
+
+    }
+
+    @Override
+    public void startEdit() {
+        if (editableProperty().get()) {
+            if (!isEmpty()) {
+                super.startEdit();
+                createTextField();
+                setText(null);
+                setGraphic(textField);
+                textField.requestFocus();
+            }
+        }
+    }
+
+    @Override
+    public void cancelEdit() {
+        super.cancelEdit();
+        setText(getItem());
+        setGraphic(null);
+    }
+
+    @Override
+    public void updateItem(String item, boolean empty) {
+        super.updateItem(item, empty);
+
+        if (empty) {
+            setText(null);
+            setGraphic(null);
+        } else {
+            if (isEditing()) {
+                if (textField != null) {
+                    textField.setText(getString());
+                    textField.selectAll();
+                }
+                setText(null);
+                setGraphic(textField);
+            } else {
+                setText(getString());
+                setGraphic(null);
+            }
+        }
+    }
+
+    protected void createTextField() {
+        textField = new TextField(getString());
+        textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+        textField.focusedProperty().addListener(changeListener);
+        textField.setOnAction(evt -> commitEdit(textField.getText()));
+
+        textField.setOnKeyPressed((ke) -> {
+            if (ke.getCode().equals(KeyCode.ESCAPE)) {
+                textField.focusedProperty().removeListener(changeListener);
+                cancelEdit();
+            }
+            if (ke.getCode().equals(KeyCode.TAB)) {
+                commitEdit(textField.getText());
+            }
+        });
+    }
+
+
+    protected String getString() {
+        return getItem() == null ? "" : getItem();
+    }
+
+    @Override
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void commitEdit(String item) {
+        textField.focusedProperty().removeListener(changeListener);
+        if (isEditing()) {
+            super.commitEdit(item);
+        } else {
+            final TableView table = getTableView();
+            if (table != null) {
+                TablePosition position = new TablePosition(getTableView(),
+                        getTableRow().getIndex(), getTableColumn());
+                TableColumn.CellEditEvent editEvent = new TableColumn.CellEditEvent(table, position,
+                        TableColumn.editCommitEvent(), item);
+                Event.fireEvent(getTableColumn(), editEvent);
+            }
+            updateItem(item, false);
+            if (table != null) {
+                table.edit(-1, null);
+            }
+
+        }
+    }
+
 }
