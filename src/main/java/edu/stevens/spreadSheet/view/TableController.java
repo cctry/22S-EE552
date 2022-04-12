@@ -38,6 +38,8 @@ public class TableController {
             assert colID != 0 : "The first column should not be edited.";
             var newValue = t.getNewValue();
             setCellContent(rowID, colID, newValue);
+            /* Update the formula bar */
+            formulaBar.setText(newValue);
         });
         column.setSortable(false);
         table.getColumns().add(column);
@@ -76,7 +78,7 @@ public class TableController {
         var sheet = workbook.getCurrentSheet();
         int maxColumnNum = 0;
         /* create rows */
-        for (int r = 0; r < sheet.getLastRowNum(); r++) {
+        for (int r = 1; r <= sheet.getLastRowNum(); r++) {
             var row = sheet.getRow(r);
             tableRows.add(new TableRow(row, r));
             maxColumnNum = Math.max(row.getLastCellNum(), maxColumnNum);
