@@ -76,7 +76,7 @@
         </Menu>
       </menus>
     </MenuBar>
-      <TextField maxHeight="25.0" minHeight="25.0" prefHeight="25.0" />
+      <TextField fx:id="formulaBar" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" />
     <TabPane prefHeight="200.0" prefWidth="200.0" side="BOTTOM" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
       <tabs>
         <Tab text="Untitled Tab 1">

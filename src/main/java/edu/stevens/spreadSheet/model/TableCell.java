@@ -36,6 +36,9 @@ public class TableCell {
 
     public void setValue(String value) {
         setValueString(value);
+        if (value.length() == 0) {
+            POICell.setBlank();
+        }
         if (NumberUtils.isParsable(value)) {
             POICell.setCellValue(Double.parseDouble(value));
         } else if ("false".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value)) {
@@ -45,6 +48,10 @@ public class TableCell {
         } else {
             POICell.setCellValue(value);
         }
+    }
+
+    public boolean isBlank() {
+        return getValueString().length() == 0;
     }
 
 

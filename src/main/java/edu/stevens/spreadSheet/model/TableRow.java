@@ -49,10 +49,6 @@ public class TableRow {
         return cells.get(index);
     }
 
-    public ObservableList<TableCell> getAllCells() {
-        return cells;
-    }
-
     public TableCell getCellOrCreateEmpty(int index) {
         if (index >= numberOfCells) {
             for (int i = 0; i <= index - numberOfCells; i++) {

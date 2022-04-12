@@ -11,7 +11,8 @@ public class POIWorkbookFactory {
         for (int r = 0; r < nrow; r++) {
             var row = sheet.createRow(r);
             for (int c = 0; c < ncol; c++) {
-                row.createCell(c);
+                var cell = row.createCell(c);
+                cell.setBlank();
             }
         }
         return workbookProxy;
