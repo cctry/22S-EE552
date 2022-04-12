@@ -1,5 +1,6 @@
 package edu.stevens.spreadSheet.view;
 
+import edu.stevens.spreadSheet.model.POIWorkbook;
 import edu.stevens.spreadSheet.model.TableRow;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -8,28 +9,19 @@ import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import org.apache.poi.ss.util.CellReference;
 
-class ColumnLabelGenerator {
-    static String generate(int index) {
-        assert index >= 0 && index < 26;
-        return (char) ('A' + index) + "";
-    }
-}
 
 public class TableController {
 
-    private final int initNumberCol = 8;
-    private final int initNumberRow = 50;
-    private int numRows;
-    private int numColumns;
-
     private ObservableList<TableRow> tableRows;
+
+    POIWorkbook workbook;
 
     @FXML
     private TableView<TableRow> table;
 
-
-    private TableColumn<TableRow, ?> getColumn(int index) {
+    private TableColumn<TableRow, ?> getColumns(int index) {
         return table.getColumns().get(index);
     }
 
@@ -39,50 +31,50 @@ public class TableController {
 
     private void addColumn(String name, int index) {
         var column = new TableColumn<TableRow, String>(name);
-        column.setCellValueFactory(p -> p.getValue().getCell(index).getValueStringProperty());
+        column.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(index).getValueStringProperty());
         column.setCellFactory(p -> new EditableStringTableCell<>());
         column.setOnEditCommit((TableColumn.CellEditEvent<TableRow, String> t) -> {
-                    int row_id = t.getTablePosition().getRow();
-                    int col_id = t.getTablePosition().getColumn();
-                    var new_value = t.getNewValue();
-                    t.getTableView().getItems().get(row_id)
-                            .setCellContent(col_id, new_value);
+                    int rowID = t.getTablePosition().getRow();
+                    int colID = t.getTablePosition().getColumn() - 1; // The first column is not about data
+                    var newValue = t.getNewValue();
+                    setCell(rowID, colID, newValue);
                 }
-        ); // TODO: Require Enter to confirm
+        );
         table.getColumns().add(column);
     }
 
     @FXML
     public void initialize() {
-        this.numRows = initNumberRow;
-        this.numColumns = initNumberCol;
-        this.tableRows = FXCollections.observableArrayList();
-        for (int i = 0; i < initNumberRow; i++) {
-            var row = new TableRow(initNumberCol);
-            this.tableRows.add(row);
-        }
-        // add initial columns
-        for (int i = 0; i < initNumberCol; i++) {
-            var name = ColumnLabelGenerator.generate(i);
-            addColumn(name, i);
-        }
-        // add all cells from tableRows
-        this.table.setItems(this.tableRows);
-        this.table.setEditable(true);
         // config table
+        tableRows = FXCollections.observableArrayList();
         this.table.getSelectionModel().setCellSelectionEnabled(true);
+        this.table.setItems(this.tableRows);
     }
 
-    public void setCell(int row_id, int col_id, String content) {
-        if (col_id >= numColumns || row_id >= numRows) {
-            throw new IndexOutOfBoundsException("Set out-of-bound.");
+    void drawTable() {
+        var sheet = workbook.getCurrentSheet();
+        int maxColumnNum = 0;
+        /* create rows */
+        for (int r = 0; r < sheet.getLastRowNum(); r++) {
+            var row = sheet.getRow(r);
+            tableRows.add(new TableRow(row));
+            maxColumnNum = Math.max(row.getLastCellNum(), maxColumnNum);
         }
-        var row = this.tableRows.get(row_id);
-        row.setCellContent(col_id, content);
+        /* create columns */
+        for (int c = 0; c < maxColumnNum; c++) {
+            var columnName = CellReference.convertNumToColString(c);
+            addColumn(columnName, c);
+        }
     }
 
-    public ObservableList<TableRow> getTableRows() {
-        return this.tableRows;
+
+    public void setWorkbook(POIWorkbook workbook) {
+        this.workbook = workbook;
+        drawTable();
+    }
+
+    public void setCell(int rowID, int colID, String content) {
+        tableRows.get(rowID).getCell(colID).setValue(content);
     }
 }
 
