@@ -88,7 +88,7 @@
                               <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                            </columnResizePolicy>
                            <columns>
-                              <TableColumn editable="false" maxWidth="-1.0" minWidth="25.0" prefWidth="-1.0" resizable="false" sortable="false" />
+                              <TableColumn fx:id="rowIDColumn" editable="false" maxWidth="25.0" minWidth="25.0" prefWidth="25.0" resizable="false" sortable="false" />
                            </columns>
                 </TableView>
               </children>

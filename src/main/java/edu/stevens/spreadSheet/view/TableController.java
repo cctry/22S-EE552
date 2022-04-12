@@ -21,6 +21,9 @@ public class TableController {
     @FXML
     private TableView<TableRow> table;
 
+    @FXML
+    TableColumn<TableRow, String> rowIDColumn;
+
     private TableColumn<TableRow, ?> getColumns(int index) {
         return table.getColumns().get(index);
     }
@@ -35,7 +38,8 @@ public class TableController {
         column.setCellFactory(p -> new EditableStringTableCell<>());
         column.setOnEditCommit((TableColumn.CellEditEvent<TableRow, String> t) -> {
                     int rowID = t.getTablePosition().getRow();
-                    int colID = t.getTablePosition().getColumn() - 1; // The first column is not about data
+                    int colID = t.getTablePosition().getColumn();
+                    assert colID != 0 : "The first column should not be edited.";
                     var newValue = t.getNewValue();
                     setCell(rowID, colID, newValue);
                 }
@@ -51,18 +55,24 @@ public class TableController {
         this.table.setItems(this.tableRows);
     }
 
-    void drawTable() {
+    void drawRowIDColumn(int numRow) {
+        rowIDColumn.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(0).getValueStringProperty());
+        rowIDColumn.setStyle("-fx-alignment: CENTER;");
+    }
+
+    void drawSheet() {
         var sheet = workbook.getCurrentSheet();
         int maxColumnNum = 0;
         /* create rows */
         for (int r = 0; r < sheet.getLastRowNum(); r++) {
             var row = sheet.getRow(r);
-            tableRows.add(new TableRow(row));
+            tableRows.add(new TableRow(row, r));
             maxColumnNum = Math.max(row.getLastCellNum(), maxColumnNum);
         }
         /* create columns */
-        for (int c = 0; c < maxColumnNum; c++) {
-            var columnName = CellReference.convertNumToColString(c);
+        drawRowIDColumn(sheet.getLastRowNum());
+        for (int c = 1; c <= maxColumnNum; c++) {
+            var columnName = CellReference.convertNumToColString(c - 1);
             addColumn(columnName, c);
         }
     }
@@ -70,7 +80,7 @@ public class TableController {
 
     public void setWorkbook(POIWorkbook workbook) {
         this.workbook = workbook;
-        drawTable();
+        drawSheet();
     }
 
     public void setCell(int rowID, int colID, String content) {
@@ -131,6 +141,11 @@ class EditableStringTableCell<T> extends TableCell<T, String> {
                 setGraphic(null);
             }
         }
+
+        this.setStyle("-fx-background-color: white;" +
+                        "-fx-border-color: #a9a9a9;" +
+                        "-fx-border-width: 0.1;" +
+                        "-fx-alignment: CENTER;");
     }
 
     protected void createTextField() {

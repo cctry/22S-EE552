@@ -8,6 +8,7 @@ public class TableRow {
     private final int numberOfCells;
     private final ObservableList<TableCell> cells;
     private Row POIRow = null;
+    private int rowID = 0;
 
     public TableRow(int numberOfCells) {
         this.cells = FXCollections.observableArrayList();
@@ -17,13 +18,24 @@ public class TableRow {
         }
     }
 
-    public TableRow(Row POIRow) {
+    public TableRow(Row POIRow, int rowID) {
+        this.rowID = rowID;
         this.POIRow = POIRow;
         this.cells = FXCollections.observableArrayList();
         this.numberOfCells = POIRow.getLastCellNum();
+        cells.add(new TableCell(String.valueOf(rowID)));
         for (int i = 0; i < numberOfCells; i++) {
             cells.add(new TableCell(POIRow.getCell(i)));
         }
+    }
+
+    public int getRowID() {
+        return this.rowID;
+    }
+
+    public void setRowID(int rowID) {
+        this.rowID = rowID;
+        getCell(0).setValueString(String.valueOf(rowID));
     }
 
     public int getNumberOfCells() {
