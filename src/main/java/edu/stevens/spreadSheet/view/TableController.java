@@ -1,10 +1,9 @@
 package edu.stevens.spreadSheet.view;
 
 import edu.stevens.spreadSheet.model.POIWorkbook;
-import edu.stevens.spreadSheet.model.TableRow;
+import edu.stevens.spreadSheet.model.TableCellModel;
+import edu.stevens.spreadSheet.model.TableRowModel;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -16,27 +15,31 @@ import java.util.Objects;
 
 public class TableController {
 
-    private ObservableList<TableRow> tableRows;
+    private ObservableList<TableRowModel> tableRows;
 
     POIWorkbook workbook;
 
     @FXML
-    private TableView<TableRow> table;
+    private TableView<TableRowModel> table;
     @FXML
-    TableColumn<TableRow, String> rowIDColumn;
+    private TableColumn<TableRowModel, String> rowIDColumn;
     @FXML
-    TextField formulaBar;
+    private TextField formulaBar;
     final SimpleStringProperty formulaBarDisplay = new SimpleStringProperty();
+    @FXML
+    private Button buttonInsertRow;
+    @FXML
+    private Button buttonInsertColumn;
 
     public TableController() {
 
     }
 
     private void addColumn(String name, int index) {
-        var column = new TableColumn<TableRow, String>(name);
+        var column = new TableColumn<TableRowModel, String>(name);
         column.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(index).getValueStringProperty());
         column.setCellFactory(p -> new EditableTableCell<>());
-        column.setOnEditCommit((TableColumn.CellEditEvent<TableRow, String> t) -> {
+        column.setOnEditCommit((TableColumn.CellEditEvent<TableRowModel, String> t) -> {
             int rowID = t.getTablePosition().getRow();
             int colID = t.getTablePosition().getColumn();
             assert colID != 0 : "The first column should not be edited.";
@@ -45,7 +48,9 @@ public class TableController {
             /* Update the formula bar */
             formulaBarDisplay.set(newValue);
         });
+        column.setPrefWidth(75);
         column.setSortable(false);
+        column.setReorderable(false); // TODO: Column drag and drop is disabled for now
         table.getColumns().add(column);
     }
 
@@ -66,7 +71,7 @@ public class TableController {
     void drawRowIDColumn(int numRow) {
         rowIDColumn.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(0).getValueStringProperty());
         rowIDColumn.setCellFactory(p -> {
-            var cell = new TableCell<TableRow, String>() {
+            var cell = new TableCell<TableRowModel, String>() {
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
@@ -89,12 +94,16 @@ public class TableController {
         /* create rows */
         for (int r = 1; r <= sheet.getLastRowNum(); r++) {
             var row = sheet.getRow(r);
-            tableRows.add(new TableRow(row, r));
+            tableRows.add(new TableRowModel(row, r));
             maxColumnNum = Math.max(row.getLastCellNum(), maxColumnNum);
         } // FIXME: Drawn number of rows is incorrect.
         /* create columns */
-        drawRowIDColumn(sheet.getLastRowNum());
-        for (int c = 1; c <= maxColumnNum; c++) {
+        drawColumns(maxColumnNum);
+    }
+
+    private void drawColumns(int columnNum) {
+        drawRowIDColumn(workbook.getCurrentSheet().getLastRowNum());
+        for (int c = 1; c <= columnNum; c++) {
             var columnName = CellReference.convertNumToColString(c - 1);
             addColumn(columnName, c);
         }
@@ -128,8 +137,42 @@ public class TableController {
         return getCell(rowID, colID).getValueString();
     }
 
-    private edu.stevens.spreadSheet.model.TableCell getCell(int rowID, int colID) {
+    private TableCellModel getCell(int rowID, int colID) {
         return tableRows.get(rowID).getCell(colID);
+    }
+
+    @SuppressWarnings({"rawtypes"})
+    private TablePosition getFocusedCellPos() {
+        var pos = table.getFocusModel().focusedCellProperty().get();
+        if (pos.getRow() < 0 || pos.getColumn() < 0) {
+            return null;
+        } else {
+            return pos;
+        }
+    }
+
+    public void insertRow() {
+        var focusedPos = getFocusedCellPos();
+        int insertPos = Objects.requireNonNull(focusedPos).getRow() + 1;
+        var newRow = workbook.insertRow(insertPos);
+        tableRows.add(insertPos, new TableRowModel(newRow, insertPos + 1));
+        for (int r = insertPos + 1; r < tableRows.size(); r++) {
+            tableRows.get(r).getCell(0).setValueString(String.valueOf(r + 1));
+        }
+    }
+
+    public void insertColumn() { // FIXME: Error when insert column from the same position twice
+        var focusedPos = getFocusedCellPos();
+        int insertPos = Objects.requireNonNull(focusedPos).getColumn() + 1;
+        var addedCells = workbook.insertColumn(insertPos);
+        for (int r = 0; r < tableRows.size(); r++) {
+            tableRows.get(r).addCell(new TableCellModel(addedCells.get(r)), insertPos);
+        }
+        int numColumns = table.getColumns().size();
+        table.getColumns().clear();
+        /* Redraw all columns */
+        table.getColumns().add(rowIDColumn);
+        drawColumns(numColumns);
     }
 }
 

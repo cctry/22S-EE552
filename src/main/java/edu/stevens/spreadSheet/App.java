@@ -27,7 +27,7 @@ public class App extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("main.fxml"));
         Parent root = fxmlLoader.load();
         tableController = fxmlLoader.getController();
-        var workbook = POIWorkbookFactory.emptyWorkbook(32,16);
+        var workbook = POIWorkbookFactory.emptyWorkbook(32,10);
         tableController.setWorkbook(workbook);
         scene = new Scene(root);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles.css")).toExternalForm());
