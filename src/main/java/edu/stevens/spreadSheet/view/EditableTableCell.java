@@ -74,9 +74,6 @@ public class EditableTableCell<T> extends TableCell<T, String> {
                 textField.focusedProperty().removeListener(changeListener);
                 cancelEdit();
             }
-            if (ke.getCode().equals(KeyCode.TAB)) {
-                commitEdit(textField.getText());
-            }
         });
     }
 
@@ -93,10 +90,8 @@ public class EditableTableCell<T> extends TableCell<T, String> {
         } else {
             final TableView table = getTableView();
             if (table != null) {
-                TablePosition position = new TablePosition(getTableView(),
-                        getTableRow().getIndex(), getTableColumn());
-                TableColumn.CellEditEvent editEvent = new TableColumn.CellEditEvent(table, position,
-                        TableColumn.editCommitEvent(), item);
+                var position = new TablePosition(getTableView(), getTableRow().getIndex(), getTableColumn());
+                var editEvent = new TableColumn.CellEditEvent(table, position, TableColumn.editCommitEvent(), item);
                 Event.fireEvent(getTableColumn(), editEvent);
             }
             updateItem(item, false);
