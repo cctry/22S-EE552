@@ -3,6 +3,7 @@ package edu.stevens.spreadSheet.view;
 import edu.stevens.spreadSheet.model.POIWorkbook;
 import edu.stevens.spreadSheet.model.TableCellModel;
 import edu.stevens.spreadSheet.model.TableRowModel;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -24,6 +25,7 @@ public class TableController {
     private TableColumn<TableRowModel, String> rowIDColumn;
     @FXML
     private TextField formulaBar;
+    final SimpleStringProperty formulaBarDisplay = new SimpleStringProperty();
     @FXML
     private Button buttonInsertRow;
     @FXML
@@ -44,7 +46,7 @@ public class TableController {
             var newValue = t.getNewValue();
             setCellContent(rowID, colID, newValue);
             /* Update the formula bar */
-            formulaBar.setText(newValue);
+            formulaBarDisplay.set(newValue);
         });
         column.setPrefWidth(75);
         column.setSortable(false);
@@ -59,6 +61,11 @@ public class TableController {
         table.getSelectionModel().setCellSelectionEnabled(true);
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.setItems(tableRows);
+        /*
+         * Let the formula bar update cell only with user's input.
+         * trick: https://stackoverflow.com/questions/28421122
+         */
+        formulaBarDisplay.addListener((observable, oldVal, newVal) -> formulaBar.setText(newVal));
     }
 
     void drawRowIDColumn(int numRow) {
@@ -85,11 +92,11 @@ public class TableController {
         var sheet = workbook.getCurrentSheet();
         int maxColumnNum = 0;
         /* create rows */
-        for (int r = 1; r <= sheet.getLastRowNum(); r++) {
-            var row = sheet.getRow(r);
+        for (int r = 1; r <= sheet.getLastRowNum() + 1; r++) {
+            var row = sheet.getRow(r - 1);
             tableRows.add(new TableRowModel(row, r));
             maxColumnNum = Math.max(row.getLastCellNum(), maxColumnNum);
-        } // FIXME: Drawn number of rows is incorrect.
+        }
         /* create columns */
         drawColumns(maxColumnNum);
     }
@@ -107,29 +114,34 @@ public class TableController {
         drawSheet();
         /* Delay the initialization here to make sure all cells are initialized. */
         /* Update cell content when editing formula bar */
-        formulaBar.textProperty().addListener((obs, oldText, newText) -> {
+        formulaBar.textProperty().addListener((observable, oldVal, newVal) -> {
             var pos = table.getFocusModel().getFocusedCell();
-            if (newText.length() > 0) {
-                setCellContent(pos.getRow(), pos.getColumn(), newText);
+            if (!newVal.equals(formulaBarDisplay.get())) {
+                setCellContent(pos.getRow(), pos.getColumn(), newVal);
             }
         });
         /* display content on formula bar when the cell is selected */
-        table.getFocusModel().focusedCellProperty().addListener((observable, oldPos, pos) -> {
-            if ((pos.getRow() != -1) && (pos.getColumn() != -1)) {
-                var selectedValue = getCellContent(pos.getRow(), pos.getColumn());
-                formulaBar.setText(selectedValue);
+        table.getFocusModel().focusedCellProperty().addListener((observable, oldPos, newPos) -> {
+            if ((newPos.getRow() != -1) && (newPos.getColumn() != -1)) {
+                var selectedValue = getCellContent(newPos.getRow(), newPos.getColumn());
+                formulaBarDisplay.set(selectedValue);
             }
         });
     }
 
     public void setCellContent(int rowID, int colID, String content) {
-        tableRows.get(rowID).getCell(colID).setValue(content);
+        getCell(rowID, colID).setValue(content);
     }
 
     public String getCellContent(int rowID, int colID) {
-        return tableRows.get(rowID).getCell(colID).getValueString();
+        return getCell(rowID, colID).getValueString();
     }
 
+    private TableCellModel getCell(int rowID, int colID) {
+        return tableRows.get(rowID).getCell(colID);
+    }
+
+    @SuppressWarnings({"rawtypes"})
     private TablePosition getFocusedCellPos() {
         var pos = table.getFocusModel().focusedCellProperty().get();
         if (pos.getRow() < 0 || pos.getColumn() < 0) {
@@ -149,7 +161,7 @@ public class TableController {
         }
     }
 
-    public void insertColumn() {
+    public void insertColumn() { // FIXME: Error when insert column from the same position twice
         var focusedPos = getFocusedCellPos();
         int insertPos = Objects.requireNonNull(focusedPos).getColumn() + 1;
         var addedCells = workbook.insertColumn(insertPos);
