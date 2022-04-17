@@ -92,11 +92,11 @@ public class TableController {
         var sheet = workbook.getCurrentSheet();
         int maxColumnNum = 0;
         /* create rows */
-        for (int r = 1; r <= sheet.getLastRowNum(); r++) {
-            var row = sheet.getRow(r);
+        for (int r = 1; r <= sheet.getLastRowNum() + 1; r++) {
+            var row = sheet.getRow(r - 1);
             tableRows.add(new TableRowModel(row, r));
             maxColumnNum = Math.max(row.getLastCellNum(), maxColumnNum);
-        } // FIXME: Drawn number of rows is incorrect.
+        }
         /* create columns */
         drawColumns(maxColumnNum);
     }

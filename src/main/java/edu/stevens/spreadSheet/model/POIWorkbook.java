@@ -29,7 +29,7 @@ public class POIWorkbook {
             currentSheet.shiftRows(pos, currentSheet.getLastRowNum(), 1, true, true);
         }
         var row = currentSheet.createRow(pos);
-        for (int c = 0; c < currentSheet.getRow(pos + 1).getLastCellNum(); c++) {
+        for (int c = 0; c < currentSheet.getRow(pos - 1).getLastCellNum(); c++) {
             row.createCell(c);
         }
         return row;
