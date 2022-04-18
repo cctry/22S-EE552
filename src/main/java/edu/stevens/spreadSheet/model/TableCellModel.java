@@ -5,15 +5,15 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.commons.lang3.math.NumberUtils;
 
-public class TableCell {
+public class TableCellModel {
     private final SimpleStringProperty valueString;
     private Cell POICell = null;
 
-    public TableCell(String value) {
+    public TableCellModel(String value) {
         this.valueString = new SimpleStringProperty(value);
     }
 
-    public TableCell(Cell POICell) {
+    public TableCellModel(Cell POICell) {
         this.POICell = POICell;
         assert !DateUtil.isCellDateFormatted(POICell) : "Date value is not supported.";
         this.valueString = new SimpleStringProperty(getStringFromCell());
@@ -36,6 +36,9 @@ public class TableCell {
 
     public void setValue(String value) {
         setValueString(value);
+        if (value.length() == 0) {
+            POICell.setBlank();
+        }
         if (NumberUtils.isParsable(value)) {
             POICell.setCellValue(Double.parseDouble(value));
         } else if ("false".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value)) {
@@ -45,6 +48,10 @@ public class TableCell {
         } else {
             POICell.setCellValue(value);
         }
+    }
+
+    public boolean isBlank() {
+        return getValueString().length() == 0;
     }
 
 

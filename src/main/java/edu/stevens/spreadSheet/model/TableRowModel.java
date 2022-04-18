@@ -2,30 +2,31 @@ package edu.stevens.spreadSheet.model;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
 import org.apache.poi.ss.usermodel.Row;
 
-public class TableRow {
+public class TableRowModel {
     private final int numberOfCells;
-    private final ObservableList<TableCell> cells;
+    private final ObservableList<TableCellModel> cells;
     private Row POIRow = null;
     private int rowID = 0;
 
-    public TableRow(int numberOfCells) {
+    public TableRowModel(int numberOfCells) {
         this.cells = FXCollections.observableArrayList();
         this.numberOfCells = numberOfCells;
         for (int i = 0; i < numberOfCells; i++) {
-            cells.add(new TableCell(""));
+            cells.add(new TableCellModel(""));
         }
     }
 
-    public TableRow(Row POIRow, int rowID) {
+    public TableRowModel(Row POIRow, int rowID) {
         this.rowID = rowID;
         this.POIRow = POIRow;
         this.cells = FXCollections.observableArrayList();
         this.numberOfCells = POIRow.getLastCellNum();
-        cells.add(new TableCell(String.valueOf(rowID)));
+        cells.add(new TableCellModel(String.valueOf(rowID)));
         for (int i = 0; i < numberOfCells; i++) {
-            cells.add(new TableCell(POIRow.getCell(i)));
+            cells.add(new TableCellModel(POIRow.getCell(i)));
         }
     }
 
@@ -42,24 +43,28 @@ public class TableRow {
         return numberOfCells;
     }
 
-    public TableCell getCell(int index) {
+    public TableCellModel getCell(int index) {
         if (index < 0) {
             throw new IllegalArgumentException("index must be non-negative");
         }
         return cells.get(index);
     }
 
-    public ObservableList<TableCell> getAllCells() {
-        return cells;
-    }
-
-    public TableCell getCellOrCreateEmpty(int index) {
+    public TableCellModel getCellOrCreateEmpty(int index) {
         if (index >= numberOfCells) {
             for (int i = 0; i <= index - numberOfCells; i++) {
                 var cell = POIRow.createCell(i);
-                cells.add(new TableCell(cell));
+                cells.add(new TableCellModel(cell));
             }
         }
         return getCell(index);
+    }
+
+    public void addCell(TableCellModel cell) {
+        cells.add(cell);
+    }
+
+    public void addCell(TableCellModel cell, int index) {
+        cells.add(index, cell);
     }
 }

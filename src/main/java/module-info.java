@@ -9,4 +9,5 @@ module spreadSheet {
     opens edu.stevens.spreadSheet.view to javafx.fxml;
     exports edu.stevens.spreadSheet;
     exports edu.stevens.spreadSheet.view;
+    exports edu.stevens.spreadSheet.model;
 }
