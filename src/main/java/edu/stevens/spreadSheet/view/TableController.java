@@ -143,7 +143,11 @@ public class TableController {
 
     @SuppressWarnings({"rawtypes"})
     private TablePosition getFocusedCellPos() {
-        var pos = table.getFocusModel().focusedCellProperty().get();
+        /*
+         * Using table.getFocusModel().focusedCellProperty().get(); will return -1 when column is inserted.
+         * Current call will clear the focus after column insertion
+         */
+        var pos = table.getFocusModel().getFocusedCell();
         if (pos.getRow() < 0 || pos.getColumn() < 0) {
             return null;
         } else {
@@ -153,6 +157,9 @@ public class TableController {
 
     public void insertRow() {
         var focusedPos = getFocusedCellPos();
+        if (focusedPos == null) {
+            return;
+        }
         int insertPos = Objects.requireNonNull(focusedPos).getRow() + 1;
         var newRow = workbook.insertRow(insertPos);
         tableRows.add(insertPos, new TableRowModel(newRow, insertPos + 1));
@@ -161,8 +168,11 @@ public class TableController {
         }
     }
 
-    public void insertColumn() { // FIXME: Error when insert column from the same position twice
+    public void insertColumn() {
         var focusedPos = getFocusedCellPos();
+        if (focusedPos == null) {
+            return;
+        }
         int insertPos = Objects.requireNonNull(focusedPos).getColumn() + 1;
         var addedCells = workbook.insertColumn(insertPos);
         for (int r = 0; r < tableRows.size(); r++) {
