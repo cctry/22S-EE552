@@ -38,20 +38,20 @@ public class TableController {
 
     private void addColumn(String name, int index) {
         var column = new TableColumn<TableRowModel, String>(name);
-        column.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(index).getValueStringProperty());
+        column.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(index - 1).getValueStringProperty());
         column.setCellFactory(p -> new EditableTableCell<>());
         column.setOnEditCommit((TableColumn.CellEditEvent<TableRowModel, String> t) -> {
             int rowID = t.getTablePosition().getRow();
             int colID = t.getTablePosition().getColumn();
             assert colID != 0 : "The first column should not be edited.";
             var newValue = t.getNewValue();
-            setCellContent(rowID, colID, newValue);
+            setCellContent(rowID, colID - 1, newValue);
             /* Update the formula bar */
             formulaBarDisplay.set(newValue);
         });
         column.setPrefWidth(75);
         column.setSortable(false);
-        column.setReorderable(false); // TODO: Column drag and drop is disabled for now
+        column.setReorderable(false); // Column drag and drop is disabled for now
         table.getColumns().add(column);
     }
 
@@ -123,9 +123,9 @@ public class TableController {
         });
         /* display content on formula bar when the cell is selected */
         table.getFocusModel().focusedCellProperty().addListener((observable, oldPos, newPos) -> {
-            if ((newPos.getRow() != -1) && (newPos.getColumn() != -1)) {
+            if ((newPos.getRow() != -1) && (newPos.getColumn() > 0)) {
                 // TODO: conditional display formula
-                var selectedValue = getCellContent(newPos.getRow(), newPos.getColumn());
+                var selectedValue = getCellContent(newPos.getRow(), newPos.getColumn() - 1);
                 formulaBarDisplay.set(selectedValue);
             }
         });
@@ -152,10 +152,6 @@ public class TableController {
     public void setCellContent(int rowID, int colID, String content) {
         try {
             getCell(rowID, colID).setValue(content);
-            /*
-             * FIXME: The cell reference is shifted to left by one cell
-             *  Referring B1 but get A1
-             */
             evaluateAll();
         } catch (FormulaParseException e) {
             showAlert("Invalid formula", content + " is an invalid formula");

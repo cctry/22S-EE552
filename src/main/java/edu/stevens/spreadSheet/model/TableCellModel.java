@@ -1,14 +1,10 @@
 package edu.stevens.spreadSheet.model;
 
 import javafx.beans.property.SimpleStringProperty;
-import org.apache.poi.ss.formula.FormulaParseException;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.commons.lang3.math.NumberUtils;
-
-import java.io.IOException;
 
 import static org.apache.poi.ss.usermodel.CellType.FORMULA;
 
@@ -82,7 +78,10 @@ public class TableCellModel {
         return valueString;
     }
 
-    public void printPOICell() {
+    public String toString() {
+        if (POICell == null) {
+            return "Non-valid cell";
+        }
         String valueString;
         switch (POICell.getCellType()) {
             case STRING -> valueString = "STRING " + POICell.getRichStringCellValue().getString();
@@ -91,7 +90,7 @@ public class TableCellModel {
             case FORMULA -> valueString = "FORMULA = " + POICell.getCellFormula() + " = " + getStringFromCell(POICell.getCachedFormulaResultType());
             default -> valueString = "BLANK";
         }
-        System.out.println(valueString);
+        return valueString;
     }
 }
 

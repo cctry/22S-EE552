@@ -1,6 +1,5 @@
 package edu.stevens.spreadSheet.model;
 
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -52,10 +51,6 @@ public class TableRowModel {
 
     public SimpleStringProperty getRowIDProperty() {
         return rowID;
-    }
-
-    public void addCell(TableCellModel cell) {
-        cells.add(cell);
     }
 
     public void addCell(TableCellModel cell, int index) {
