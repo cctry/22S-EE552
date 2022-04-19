@@ -4,14 +4,15 @@ import edu.stevens.spreadSheet.model.POIWorkbook;
 import edu.stevens.spreadSheet.model.TableCellModel;
 import edu.stevens.spreadSheet.model.TableRowModel;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.util.CellReference;
-
-import java.util.Objects;
 
 
 public class TableController {
@@ -26,7 +27,8 @@ public class TableController {
     private TableColumn<TableRowModel, String> rowIDColumn;
     @FXML
     private TextField formulaBar;
-    final SimpleStringProperty formulaBarDisplay = new SimpleStringProperty();
+    final SimpleStringProperty formulaBarContent = new SimpleStringProperty();
+    boolean formulaInputMode = false;
     @FXML
     private Button buttonInsertRow;
     @FXML
@@ -45,14 +47,68 @@ public class TableController {
             int colID = t.getTablePosition().getColumn();
             assert colID != 0 : "The first column should not be edited.";
             var newValue = t.getNewValue();
-            setCellContent(rowID, colID - 1, newValue);
+            try {
+                setCellContent(rowID, colID - 1, newValue);
+            } catch (FormulaParseException e) {
+                showAlert("Invalid formula", newValue + " is an invalid formula");
+            }
             /* Update the formula bar */
-            formulaBarDisplay.set(newValue);
+            formulaBarContent.set(newValue);
         });
         column.setPrefWidth(75);
         column.setSortable(false);
         column.setReorderable(false); // Column drag and drop is disabled for now
         table.getColumns().add(column);
+    }
+
+    void initializeFormulaBar() {
+        /*
+         * Let the formula bar update cell only with user's input.
+         * trick: https://stackoverflow.com/questions/28421122
+         */
+        /*
+            Make real-time update disable when input formula.
+            Hit enter or lose focus will quit input formula.
+         */
+        formulaBarContent.addListener((observable, oldVal, newVal) -> formulaBar.setText(newVal));
+        formulaBar.setOnKeyPressed(key -> {
+            if (key.getCode().equals(KeyCode.ENTER)) {
+                formulaInputMode = false;
+                var pos = getFocusedCellPos();
+                if (pos != null) {
+                    try {
+                        setCellContent(pos.getRow(), pos.getColumn() - 1, formulaBar.getText());
+                    } catch (FormulaParseException e) {
+                        showAlert("Invalid formula", formulaBar.getText() + " is an invalid formula");
+                    }
+                }
+            }
+        });
+        formulaBar.focusedProperty().addListener((observable, oldVal, newVal) -> {
+            if (!newVal) {
+                formulaInputMode = false;
+                formulaBar.clear();
+            }
+        });
+        /* Update cell content when editing formula bar */
+        formulaBar.textProperty().addListener((observable, oldVal, newVal) -> {
+            var pos = getFocusedCellPos();
+            if (pos == null) {
+                return;
+            }
+            if (pos.getRow() >= 0 && pos.getColumn() >= 1) {
+                if (!newVal.equals(formulaBarContent.get())) {
+                    formulaInputMode = newVal.startsWith("=");
+                    try {
+                        setCellContent(pos.getRow(), pos.getColumn() - 1, newVal);
+                    } catch (FormulaParseException e) {
+                        if (!formulaInputMode) {
+                            throw e;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     @FXML
@@ -62,11 +118,7 @@ public class TableController {
         table.getSelectionModel().setCellSelectionEnabled(true);
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.setItems(tableRows);
-        /*
-         * Let the formula bar update cell only with user's input.
-         * trick: https://stackoverflow.com/questions/28421122
-         */
-        formulaBarDisplay.addListener((observable, oldVal, newVal) -> formulaBar.setText(newVal));
+        initializeFormulaBar();
     }
 
     void drawRowIDColumn(int numRow) {
@@ -114,19 +166,17 @@ public class TableController {
         this.workbook = workbook;
         drawSheet();
         /* Delay the initialization here to make sure all cells are initialized. */
-        /* Update cell content when editing formula bar */
-        formulaBar.textProperty().addListener((observable, oldVal, newVal) -> {
-            var pos = table.getFocusModel().getFocusedCell();
-            if (!newVal.equals(formulaBarDisplay.get())) {
-                setCellContent(pos.getRow(), pos.getColumn(), newVal);
-            }
-        });
         /* display content on formula bar when the cell is selected */
         table.getFocusModel().focusedCellProperty().addListener((observable, oldPos, newPos) -> {
             if ((newPos.getRow() != -1) && (newPos.getColumn() > 0)) {
-                // TODO: conditional display formula
-                var selectedValue = getCellContent(newPos.getRow(), newPos.getColumn() - 1);
-                formulaBarDisplay.set(selectedValue);
+                String displayContent;
+                var cell = getCell(newPos.getRow(), newPos.getColumn() - 1);
+                if (cell.isFormulaCell()) {
+                    displayContent = "=" + cell.getPOICell().getCellFormula();
+                } else {
+                    displayContent = cell.getValueString();
+                }
+                formulaBarContent.set(displayContent);
             }
         });
     }
@@ -149,17 +199,9 @@ public class TableController {
         }
     }
 
-    public void setCellContent(int rowID, int colID, String content) {
-        try {
-            getCell(rowID, colID).setValue(content);
-            evaluateAll();
-        } catch (FormulaParseException e) {
-            showAlert("Invalid formula", content + " is an invalid formula");
-        }
-    }
-
-    public String getCellContent(int rowID, int colID) {
-        return getCell(rowID, colID).getValueString();
+    public void setCellContent(int rowID, int colID, String content) throws FormulaParseException {
+        getCell(rowID, colID).setValue(content);
+        evaluateAll();
     }
 
     private TableCellModel getCell(int rowID, int colID) {
@@ -189,7 +231,7 @@ public class TableController {
         var newRow = workbook.insertRow(insertPos);
         tableRows.add(insertPos, new TableRowModel(newRow, insertPos + 1));
         for (int r = insertPos + 1; r < tableRows.size(); r++) {
-            tableRows.get(r).getCell(0).setValueString(String.valueOf(r + 1));
+            tableRows.get(r).setRowID(r + 1);
         }
     }
 

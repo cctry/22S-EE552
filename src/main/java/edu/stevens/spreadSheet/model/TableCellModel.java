@@ -87,7 +87,8 @@ public class TableCellModel {
             case STRING -> valueString = "STRING " + POICell.getRichStringCellValue().getString();
             case NUMERIC -> valueString = "NUMERIC " + POICell.getNumericCellValue();
             case BOOLEAN -> valueString = "BOOLEAN " + POICell.getBooleanCellValue();
-            case FORMULA -> valueString = "FORMULA = " + POICell.getCellFormula() + " = " + getStringFromCell(POICell.getCachedFormulaResultType());
+            case FORMULA ->
+                    valueString = "FORMULA = " + POICell.getCellFormula() + " = " + getStringFromCell(POICell.getCachedFormulaResultType());
             default -> valueString = "BLANK";
         }
         return valueString;

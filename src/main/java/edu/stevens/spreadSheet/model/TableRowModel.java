@@ -56,4 +56,8 @@ public class TableRowModel {
     public void addCell(TableCellModel cell, int index) {
         cells.add(index + 1, cell);
     }
+
+    public void setRowID(int i) {
+        rowID.set(String.valueOf(i));
+    }
 }
