@@ -8,6 +8,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.util.CellReference;
 
 import java.util.Objects;
@@ -69,7 +70,7 @@ public class TableController {
     }
 
     void drawRowIDColumn(int numRow) {
-        rowIDColumn.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(0).getValueStringProperty());
+        rowIDColumn.setCellValueFactory(p -> p.getValue().getRowIDProperty());
         rowIDColumn.setCellFactory(p -> {
             var cell = new TableCell<TableRowModel, String>() {
                 @Override
@@ -123,14 +124,42 @@ public class TableController {
         /* display content on formula bar when the cell is selected */
         table.getFocusModel().focusedCellProperty().addListener((observable, oldPos, newPos) -> {
             if ((newPos.getRow() != -1) && (newPos.getColumn() != -1)) {
+                // TODO: conditional display formula
                 var selectedValue = getCellContent(newPos.getRow(), newPos.getColumn());
                 formulaBarDisplay.set(selectedValue);
             }
         });
     }
 
+    void showAlert(String header, String message) {
+        var alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("ERROR");
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+        alert.show();
+    }
+
+    void evaluateAll() {
+        workbook.evaluateAll();
+        // update all cells
+        for (var row : tableRows) {
+            for (int c = 0; c < row.getNumberOfCells(); c++) {
+                row.getCell(c).updateFromCell();
+            }
+        }
+    }
+
     public void setCellContent(int rowID, int colID, String content) {
-        getCell(rowID, colID).setValue(content);
+        try {
+            getCell(rowID, colID).setValue(content);
+            /*
+             * FIXME: The cell reference is shifted to left by one cell
+             *  Referring B1 but get A1
+             */
+            evaluateAll();
+        } catch (FormulaParseException e) {
+            showAlert("Invalid formula", content + " is an invalid formula");
+        }
     }
 
     public String getCellContent(int rowID, int colID) {
@@ -160,7 +189,7 @@ public class TableController {
         if (focusedPos == null) {
             return;
         }
-        int insertPos = Objects.requireNonNull(focusedPos).getRow() + 1;
+        int insertPos = focusedPos.getRow() + 1;
         var newRow = workbook.insertRow(insertPos);
         tableRows.add(insertPos, new TableRowModel(newRow, insertPos + 1));
         for (int r = insertPos + 1; r < tableRows.size(); r++) {
@@ -173,7 +202,7 @@ public class TableController {
         if (focusedPos == null) {
             return;
         }
-        int insertPos = Objects.requireNonNull(focusedPos).getColumn() + 1;
+        int insertPos = focusedPos.getColumn(); // insertPos is the one after the focused
         var addedCells = workbook.insertColumn(insertPos);
         for (int r = 0; r < tableRows.size(); r++) {
             tableRows.get(r).addCell(new TableCellModel(addedCells.get(r)), insertPos);

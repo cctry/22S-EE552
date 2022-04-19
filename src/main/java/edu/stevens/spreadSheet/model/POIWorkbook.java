@@ -3,17 +3,16 @@ package edu.stevens.spreadSheet.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 
 public class POIWorkbook {
     final Workbook workbook;
+    final FormulaEvaluator formulaEvaluator;
     Sheet currentSheet;
 
     public POIWorkbook(Workbook workbook) {
         this.workbook = workbook;
+        this.formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
     }
 
     public void setCurrentSheet(Sheet sheet) {
@@ -36,8 +35,10 @@ public class POIWorkbook {
     }
 
     public List<Cell> insertColumn(int pos) {
-        if (currentSheet.getRow(0).getLastCellNum() >= pos) {
-            currentSheet.shiftColumns(pos, currentSheet.getRow(0).getLastCellNum(), 1);
+        int currentCellNum = currentSheet.getRow(0).getLastCellNum();
+        assert pos <= currentCellNum : "Inserted column must be neighbors of existing columns";
+        if (currentCellNum > pos) {
+            currentSheet.shiftColumns(pos, currentCellNum, 1);
         }
         List<Cell> addedCells = new ArrayList<>();
         for (var row : currentSheet) {
@@ -47,6 +48,14 @@ public class POIWorkbook {
         return addedCells;
     }
 
+    public void evaluateAll() {
+        formulaEvaluator.clearAllCachedResultValues();
+        formulaEvaluator.evaluateAll();
+    }
+
+    public FormulaEvaluator getEvaluator() {
+        return formulaEvaluator;
+    }
 }
 
 
