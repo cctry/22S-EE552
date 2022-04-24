@@ -4,13 +4,12 @@ import edu.stevens.spreadSheet.model.POIWorkbook;
 import edu.stevens.spreadSheet.model.TableCellModel;
 import edu.stevens.spreadSheet.model.TableRowModel;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.util.CellReference;
 
@@ -30,9 +29,14 @@ public class TableController {
     final SimpleStringProperty formulaBarContent = new SimpleStringProperty();
     boolean formulaInputMode = false;
     @FXML
-    private Button buttonInsertRow;
+    private Button buttonInsertAbove;
     @FXML
-    private Button buttonInsertColumn;
+    private Button buttonInsertBelow;
+    @FXML
+    private Button buttonInsertLeft;
+    @FXML
+    private Button buttonInsertRight;
+    private TableCellModel cellRegister;
 
     public TableController() {
 
@@ -58,7 +62,7 @@ public class TableController {
         column.setPrefWidth(75);
         column.setSortable(false);
         column.setReorderable(false); // Column drag and drop is disabled for now
-        table.getColumns().add(column);
+        table.getColumns().add(index, column);
     }
 
     void initializeFormulaBar() {
@@ -87,7 +91,7 @@ public class TableController {
         formulaBar.focusedProperty().addListener((observable, oldVal, newVal) -> {
             if (!newVal) {
                 formulaInputMode = false;
-                formulaBar.clear();
+                formulaBarContent.set("");
             }
         });
         /* Update cell content when editing formula bar */
@@ -136,7 +140,7 @@ public class TableController {
                 }
             };
             cell.getStyleClass().clear();
-            cell.getStyleClass().add("rowid-cell");
+            cell.getStyleClass().add("rowID-cell");
             return cell;
         });
     }
@@ -222,34 +226,107 @@ public class TableController {
         }
     }
 
-    public void insertRow() {
+    public void insertRow(MouseEvent event) {
         var focusedPos = getFocusedCellPos();
         if (focusedPos == null) {
             return;
         }
-        int insertPos = focusedPos.getRow() + 1;
+        int insertPos = focusedPos.getRow();
+        var button = (Button) event.getSource();
+        if (button == buttonInsertBelow) {
+            insertPos += 1;
+        }
         var newRow = workbook.insertRow(insertPos);
         tableRows.add(insertPos, new TableRowModel(newRow, insertPos + 1));
-        for (int r = insertPos + 1; r < tableRows.size(); r++) {
-            tableRows.get(r).setRowID(r + 1);
-        }
+        refreshRowID();
     }
 
-    public void insertColumn() {
+    public void insertColumn(MouseEvent event) {
         var focusedPos = getFocusedCellPos();
         if (focusedPos == null) {
             return;
         }
         int insertPos = focusedPos.getColumn(); // insertPos is the one after the focused
+        var button = (Button) event.getSource();
+        if (button == buttonInsertLeft) {
+            insertPos -= 1;
+        }
         var addedCells = workbook.insertColumn(insertPos);
         for (int r = 0; r < tableRows.size(); r++) {
             tableRows.get(r).addCell(new TableCellModel(addedCells.get(r)), insertPos);
         }
-        int numColumns = table.getColumns().size();
-        table.getColumns().clear();
+        refreshColumns();
+    }
+
+    private void refreshColumns() {
         /* Redraw all columns */
+        var columnNum = table.getColumns().size();
+        table.getColumns().clear();
         table.getColumns().add(rowIDColumn);
-        drawColumns(numColumns);
+        drawColumns(columnNum);
+    }
+
+    public void deleteColumn() {
+        var focusedPos = getFocusedCellPos();
+        if (focusedPos == null) {
+            return;
+        }
+        int deletedPos = focusedPos.getColumn() - 1;
+        workbook.deleteColumn(deletedPos);
+        for (var tableRow : tableRows) {
+            tableRow.removeCell(deletedPos);
+        }
+        refreshColumns();
+    }
+
+    public void deleteRow() {
+        var focusedPos = getFocusedCellPos();
+        if (focusedPos == null) {
+            return;
+        }
+        int deletedPos = focusedPos.getRow();
+        workbook.deleteRow(deletedPos);
+        tableRows.remove(deletedPos);
+        refreshRowID();
+    }
+
+    private void refreshRowID() {
+        for (int r = 0; r < tableRows.size(); r++) {
+            tableRows.get(r).setRowID(r + 1);
+        }
+    }
+
+    public void copyCell() {
+        this.cellRegister = getFocusedCell();
+    }
+
+    public void clearCell() {
+        var cell = getFocusedCell();
+        cell.setValue("");
+        evaluateAll();
+    }
+
+    private TableCellModel getFocusedCell() {
+        var pos = table.getFocusModel().getFocusedCell();
+        return getCell(pos.getRow(), pos.getColumn() - 1);
+    }
+
+    public void pasteCell() {
+        var cell = getFocusedCell();
+        if (cellRegister.isFormulaCell()) {
+            cell.setValue("=" + cellRegister.getPOICell().getCellFormula());
+        } else {
+            cell.setValue(cellRegister.getValueString());
+        }
+        evaluateAll();
+    }
+
+    public void menuAboutAction() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("About");
+        alert.setHeaderText("This software");
+        alert.setContentText("42");
+        alert.show();
     }
 }
 

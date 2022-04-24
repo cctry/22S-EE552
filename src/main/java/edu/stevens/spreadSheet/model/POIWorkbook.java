@@ -23,19 +23,27 @@ public class POIWorkbook {
         return currentSheet;
     }
 
+    private int maxColumnNum() {
+        int result = 0;
+        for (var row : getCurrentSheet()) {
+            result = Math.max(result, row.getLastCellNum());
+        }
+        return result;
+    }
+
     public Row insertRow(int pos) {
         if (currentSheet.getLastRowNum() >= pos) {
             currentSheet.shiftRows(pos, currentSheet.getLastRowNum(), 1, true, true);
         }
         var row = currentSheet.createRow(pos);
-        for (int c = 0; c < currentSheet.getRow(pos - 1).getLastCellNum(); c++) {
+        for (int c = 0; c < maxColumnNum(); c++) {
             row.createCell(c);
         }
         return row;
     }
 
     public List<Cell> insertColumn(int pos) {
-        int currentCellNum = currentSheet.getRow(0).getLastCellNum();
+        int currentCellNum = maxColumnNum();
         assert pos <= currentCellNum : "Inserted column must be neighbors of existing columns";
         if (currentCellNum > pos) {
             currentSheet.shiftColumns(pos, currentCellNum, 1);
@@ -53,8 +61,12 @@ public class POIWorkbook {
         formulaEvaluator.evaluateAll();
     }
 
-    public FormulaEvaluator getEvaluator() {
-        return formulaEvaluator;
+    public void deleteRow(int pos) {
+        currentSheet.shiftRows(pos + 1, currentSheet.getLastRowNum(), -1, true, true);
+    }
+
+    public void deleteColumn(int pos) {
+        currentSheet.shiftColumns(pos + 1, maxColumnNum(), -1);
     }
 }
 

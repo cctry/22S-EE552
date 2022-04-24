@@ -12,14 +12,14 @@
 }
 
 
-.rowid-cell:fill:selected:focused {
+.rowID-cell:fill:selected:focused {
     -fx-background-color: #aeaeae;
     -fx-border-color: #9c9c9c;
     -fx-border-width: 0.1px;
     -fx-alignment: CENTER;
 }
 
-.rowid-cell {
+.rowID-cell {
     -fx-background-color: #aeaeae;
     -fx-border-color: #9c9c9c #9c9c9c #9c9c9c #9c9c9c;
     -fx-border-width: 0.1px;

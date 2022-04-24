@@ -32,25 +32,11 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.SeparatorMenuItem?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.ToolBar?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<VBox prefHeight="530.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="edu.stevens.spreadSheet.view.TableController">
+<VBox prefHeight="530.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="edu.stevens.spreadSheet.view.TableController">
   <children>
     <MenuBar VBox.vgrow="NEVER">
       <menus>
@@ -63,50 +49,92 @@
             <MenuItem mnemonicParsing="false" text="Close" />
             <MenuItem mnemonicParsing="false" text="Save" />
             <MenuItem mnemonicParsing="false" text="Save As…" />
-            <MenuItem mnemonicParsing="false" text="Revert" />
+<!--            <MenuItem mnemonicParsing="false" text="Revert" />-->
             <SeparatorMenuItem mnemonicParsing="false" />
-            <MenuItem mnemonicParsing="false" text="Preferences…" />
-            <SeparatorMenuItem mnemonicParsing="false" />
+<!--            <MenuItem mnemonicParsing="false" text="Preferences…" />-->
+<!--            <SeparatorMenuItem mnemonicParsing="false" />-->
             <MenuItem mnemonicParsing="false" text="Quit" />
           </items>
         </Menu>
-        <Menu mnemonicParsing="false" text="Edit">
-          <items>
-            <MenuItem mnemonicParsing="false" text="Undo" />
-            <MenuItem mnemonicParsing="false" text="Redo" />
-            <SeparatorMenuItem mnemonicParsing="false" />
-            <MenuItem mnemonicParsing="false" text="Cut" />
-            <MenuItem mnemonicParsing="false" text="Copy" />
-            <MenuItem mnemonicParsing="false" text="Paste" />
-            <MenuItem mnemonicParsing="false" text="Delete" />
-            <SeparatorMenuItem mnemonicParsing="false" />
-            <MenuItem mnemonicParsing="false" text="Select All" />
-            <MenuItem mnemonicParsing="false" text="Unselect All" />
-          </items>
-        </Menu>
+<!--        <Menu mnemonicParsing="false" text="Edit">-->
+<!--          <items>-->
+<!--            <MenuItem mnemonicParsing="false" text="Undo" />-->
+<!--            <MenuItem mnemonicParsing="false" text="Redo" />-->
+<!--            <SeparatorMenuItem mnemonicParsing="false" />-->
+<!--            <MenuItem mnemonicParsing="false" text="Cut" />-->
+<!--            <MenuItem mnemonicParsing="false" text="Copy" />-->
+<!--            <MenuItem mnemonicParsing="false" text="Paste" />-->
+<!--            <MenuItem mnemonicParsing="false" text="Delete" />-->
+<!--            <SeparatorMenuItem mnemonicParsing="false" />-->
+<!--            <MenuItem mnemonicParsing="false" text="Select All" />-->
+<!--            <MenuItem mnemonicParsing="false" text="Unselect All" />-->
+<!--          </items>-->
+<!--        </Menu>-->
         <Menu mnemonicParsing="false" text="Help">
           <items>
-            <MenuItem mnemonicParsing="false" text="About MyHelloApp" />
+            <MenuItem mnemonicParsing="false" onAction="#menuAboutAction" text="About" />
           </items>
         </Menu>
       </menus>
     </MenuBar>
       <HBox prefHeight="72.0" prefWidth="640.0">
          <children>
-            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="3.0">
-               <padding>
-                  <Insets left="20.0" right="20.0" top="5.0" />
-               </padding>
+            <VBox alignment="CENTER" spacing="3.0">
                <children>
-                  <Button fx:id="buttonInsertRow" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#insertRow" text="Row" textAlignment="JUSTIFY" />
-                  <Button fx:id="buttonInsertColumn" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#insertColumn" text="Column" />
+                  <HBox spacing="3.0">
+                     <children>
+                        <Button fx:id="buttonInsertAbove" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#insertRow" prefWidth="60.0" text="Above" textAlignment="JUSTIFY" />
+                        <Button fx:id="buttonInsertBelow" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#insertRow" prefWidth="60.0" text="Below" />
+                        <Button fx:id="buttonInsertLeft" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#insertColumn" prefWidth="60.0" text="Left" textAlignment="JUSTIFY" />
+                        <Button fx:id="buttonInsertRight" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#insertColumn" prefWidth="60.0" text="Right" />
+                     </children>
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <padding>
+                        <Insets left="20.0" right="20.0" top="5.0" />
+                     </padding>
+                  </HBox>
                   <Label text="Insert" />
                </children>
                <HBox.margin>
                   <Insets />
                </HBox.margin>
+               <padding>
+                  <Insets left="5.0" right="5.0" top="5.0" />
+               </padding>
             </VBox>
             <Separator orientation="VERTICAL" prefHeight="200.0" />
+            <VBox alignment="CENTER" spacing="3.0">
+               <padding>
+                  <Insets left="20.0" right="20.0" top="5.0" />
+               </padding>
+               <children>
+                  <VBox spacing="4.0">
+                     <children>
+                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#deleteRow" text="Row" textAlignment="JUSTIFY" />
+                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#deleteColumn" text="Column" />
+                     </children>
+                  </VBox>
+                  <Label text="Delete" />
+               </children>
+            </VBox>
+            <Separator orientation="VERTICAL" prefHeight="200.0" />
+            <VBox alignment="CENTER" spacing="3.0">
+               <padding>
+                  <Insets left="5.0" right="5.0" top="5.0" />
+               </padding>
+               <children>
+                  <HBox spacing="8.0">
+                     <children>
+                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#clearCell" prefWidth="60.0" text="Clear" textAlignment="JUSTIFY" />
+                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#copyCell" prefWidth="60.0" text="Copy" />
+                        <Button layoutX="75.0" layoutY="10.0" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#pasteCell" prefWidth="60.0" text="Paste" />
+                     </children>
+                  </HBox>
+                  <Label text="Edit" />
+               </children>
+            </VBox>
          </children>
       </HBox>
       <TextField fx:id="formulaBar" maxHeight="25.0" maxWidth="1.7976931348623157E308" minHeight="25.0" prefHeight="25.0" />
