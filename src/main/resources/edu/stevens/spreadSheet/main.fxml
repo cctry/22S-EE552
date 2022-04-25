@@ -36,6 +36,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<!--suppress JavaFxDefaultTag -->
 <VBox prefHeight="530.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="edu.stevens.spreadSheet.view.TableController">
   <children>
     <MenuBar VBox.vgrow="NEVER">
@@ -110,11 +111,11 @@
                <children>
                   <VBox spacing="4.0">
                      <children>
-                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#deleteRow" text="Row" textAlignment="JUSTIFY" />
-                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#deleteColumn" text="Column" />
+                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#removeRow" text="Row" textAlignment="JUSTIFY" />
+                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#removeColumn" text="Column" />
                      </children>
                   </VBox>
-                  <Label text="Delete" />
+                  <Label text="Remove" />
                </children>
             </VBox>
             <Separator orientation="VERTICAL" prefHeight="200.0" />

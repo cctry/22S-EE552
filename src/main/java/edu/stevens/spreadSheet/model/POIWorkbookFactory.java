@@ -11,8 +11,8 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class POIWorkbookFactory {
-    public static int defaultColumnNum = 10;
-    public static int defaultRowNum = 20;
+    public static final int defaultColumnNum = 10;
+    public static final int defaultRowNum = 20;
 
     public static POIWorkbook emptyWorkbook(int nrow, int ncol) {
         var workbook = new HSSFWorkbook();
@@ -20,8 +20,7 @@ public class POIWorkbookFactory {
         var workbookProxy = new POIWorkbook(workbook);
         workbookProxy.setCurrentSheet(sheet);
         for (int r = 0; r < nrow; r++) {
-            var row = sheet.createRow(r);
-            for (int c = 0; c < ncol; c++) {
+            var row = sheet.createRow(r);for (int c = 0; c < ncol; c++) {
                 row.createCell(c);
             }
         }
@@ -60,14 +59,15 @@ public class POIWorkbookFactory {
         if (maxColumnNum == null) {
             throw new CsvException("Unable to fine the widest row.");
         }
-        var workbookProxy = emptyWorkbook(records.size(), maxColumnNum);
+        int numberOfRow = Math.max(records.size(), defaultRowNum);
+        int numberOfColumn = Math.max(maxColumnNum, defaultColumnNum);
+        var workbookProxy = emptyWorkbook(numberOfRow, numberOfColumn);
         var sheet = workbookProxy.getCurrentSheet();
-        for (int r = 0; r <= sheet.getLastRowNum(); r++) {
-            var row = sheet.getRow(r);
+        for (int r = 0; r < records.size(); r++) {
             var record = records.get(r);
-            for (int c = 0; c < row.getLastCellNum(); c++) {
-                var cell = row.getCell(c);
-                var entry = c < record.length ? record[c] : "";
+            for (int c = 0; c < record.length; c++) {
+                var cell = sheet.getRow(r).getCell(c);
+                var entry = record[c];
                 // parse the entry and store
                 if (entry.length() == 0) {
                     cell.setBlank();

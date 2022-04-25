@@ -10,11 +10,7 @@ import static org.apache.poi.ss.usermodel.CellType.FORMULA;
 
 public class TableCellModel {
     private final SimpleStringProperty valueString;
-    private Cell POICell = null;
-
-    public TableCellModel(String value) {
-        this.valueString = new SimpleStringProperty(value);
-    }
+    private final Cell POICell;
 
     public TableCellModel(Cell POICell) {
         this.POICell = POICell;
@@ -86,8 +82,7 @@ public class TableCellModel {
     }
 
     public String getCellFormula() {
-        assert isFormulaCell() : "This is not a formula cell.";
-        return POICell.getCellFormula();
+        return isFormulaCell() ? POICell.getCellFormula() : null;
     }
 }
 

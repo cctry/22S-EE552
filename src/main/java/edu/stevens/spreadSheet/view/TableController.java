@@ -277,7 +277,7 @@ public class TableController {
         drawColumns(columnNum);
     }
 
-    public void deleteColumn() {
+    public void removeColumn() {
         var focusedPos = getFocusedCellPos();
         if (focusedPos == null) {
             return;
@@ -290,7 +290,7 @@ public class TableController {
         refreshColumns(getColumnNum() - 1);
     }
 
-    public void deleteRow() {
+    public void removeRow() {
         var focusedPos = getFocusedCellPos();
         if (focusedPos == null) {
             return;
