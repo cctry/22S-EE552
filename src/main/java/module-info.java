@@ -4,6 +4,7 @@ module spreadSheet {
     requires transitive javafx.graphics;
     requires org.apache.poi.poi;
     requires org.apache.commons.lang3;
+    requires com.opencsv;
 
     opens edu.stevens.spreadSheet to javafx.fxml;
     opens edu.stevens.spreadSheet.view to javafx.fxml;

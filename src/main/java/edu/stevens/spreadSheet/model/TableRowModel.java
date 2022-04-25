@@ -1,46 +1,34 @@
 package edu.stevens.spreadSheet.model;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import org.apache.poi.ss.usermodel.Row;
 
 public class TableRowModel {
-    private final int numberOfCells;
     private final ObservableList<TableCellModel> cells;
     private Row POIRow = null;
-    private int rowID = 0;
+    private final SimpleStringProperty rowID = new SimpleStringProperty("0");
 
     public TableRowModel(int numberOfCells) {
         this.cells = FXCollections.observableArrayList();
-        this.numberOfCells = numberOfCells;
         for (int i = 0; i < numberOfCells; i++) {
             cells.add(new TableCellModel(""));
         }
     }
 
     public TableRowModel(Row POIRow, int rowID) {
-        this.rowID = rowID;
+        this.rowID.set(String.valueOf(rowID));
         this.POIRow = POIRow;
         this.cells = FXCollections.observableArrayList();
-        this.numberOfCells = POIRow.getLastCellNum();
-        cells.add(new TableCellModel(String.valueOf(rowID)));
-        for (int i = 0; i < numberOfCells; i++) {
+        for (int i = 0; i < POIRow.getLastCellNum(); i++) {
             cells.add(new TableCellModel(POIRow.getCell(i)));
         }
     }
 
-    public int getRowID() {
-        return this.rowID;
-    }
-
-    public void setRowID(int rowID) {
-        this.rowID = rowID;
-        getCell(0).setValueString(String.valueOf(rowID));
-    }
-
     public int getNumberOfCells() {
-        return numberOfCells;
+        return cells.size();
     }
 
     public TableCellModel getCell(int index) {
@@ -51,20 +39,26 @@ public class TableRowModel {
     }
 
     public TableCellModel getCellOrCreateEmpty(int index) {
-        if (index >= numberOfCells) {
-            for (int i = 0; i <= index - numberOfCells; i++) {
-                var cell = POIRow.createCell(i);
-                cells.add(new TableCellModel(cell));
-            }
+        for (int i = 0; i <= index - getNumberOfCells(); i++) {
+            var cell = POIRow.createCell(i);
+            cells.add(new TableCellModel(cell));
         }
         return getCell(index);
     }
 
-    public void addCell(TableCellModel cell) {
-        cells.add(cell);
+    public SimpleStringProperty getRowIDProperty() {
+        return rowID;
     }
 
     public void addCell(TableCellModel cell, int index) {
         cells.add(index, cell);
+    }
+
+    public void setRowID(int i) {
+        rowID.set(String.valueOf(i));
+    }
+
+    public void removeCell(int i) {
+        cells.remove(i);
     }
 }

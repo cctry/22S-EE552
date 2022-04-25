@@ -1,6 +1,8 @@
 package edu.stevens.spreadSheet.view;
 
+import com.opencsv.exceptions.CsvException;
 import edu.stevens.spreadSheet.model.POIWorkbook;
+import edu.stevens.spreadSheet.model.POIWorkbookFactory;
 import edu.stevens.spreadSheet.model.TableCellModel;
 import edu.stevens.spreadSheet.model.TableRowModel;
 import javafx.beans.property.SimpleStringProperty;
@@ -8,9 +10,14 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.util.CellReference;
 
-import java.util.Objects;
+import java.io.IOException;
 
 
 public class TableController {
@@ -25,11 +32,18 @@ public class TableController {
     private TableColumn<TableRowModel, String> rowIDColumn;
     @FXML
     private TextField formulaBar;
-    final SimpleStringProperty formulaBarDisplay = new SimpleStringProperty();
+    final SimpleStringProperty formulaBarContent = new SimpleStringProperty();
+    boolean formulaInputMode = false;
     @FXML
-    private Button buttonInsertRow;
+    private Button buttonInsertAbove;
     @FXML
-    private Button buttonInsertColumn;
+    private Button buttonInsertBelow;
+    @FXML
+    private Button buttonInsertLeft;
+    @FXML
+    private Button buttonInsertRight;
+    private TableCellModel cellRegister;
+    private Stage stage;
 
     public TableController() {
 
@@ -37,21 +51,75 @@ public class TableController {
 
     private void addColumn(String name, int index) {
         var column = new TableColumn<TableRowModel, String>(name);
-        column.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(index).getValueStringProperty());
+        column.setCellValueFactory(p -> p.getValue().getCell(index).getValueStringProperty());
         column.setCellFactory(p -> new EditableTableCell<>());
         column.setOnEditCommit((TableColumn.CellEditEvent<TableRowModel, String> t) -> {
             int rowID = t.getTablePosition().getRow();
             int colID = t.getTablePosition().getColumn();
             assert colID != 0 : "The first column should not be edited.";
             var newValue = t.getNewValue();
-            setCellContent(rowID, colID, newValue);
+            try {
+                setCellContent(rowID, colID - 1, newValue);
+            } catch (FormulaParseException e) {
+                showAlert("Invalid formula", newValue + " is an invalid formula");
+            }
             /* Update the formula bar */
-            formulaBarDisplay.set(newValue);
+            formulaBarContent.set(newValue);
         });
         column.setPrefWidth(75);
         column.setSortable(false);
-        column.setReorderable(false); // TODO: Column drag and drop is disabled for now
-        table.getColumns().add(column);
+        column.setReorderable(false); // Column drag and drop is disabled for now
+        table.getColumns().add(index + 1, column);
+    }
+
+    void initializeFormulaBar() {
+        /*
+         * Let the formula bar update cell only with user's input.
+         * trick: https://stackoverflow.com/questions/28421122
+         */
+        /*
+            Make real-time update disable when input formula.
+            Hit enter or lose focus will quit input formula.
+         */
+        formulaBarContent.addListener((observable, oldVal, newVal) -> formulaBar.setText(newVal));
+        formulaBar.setOnKeyPressed(key -> {
+            if (key.getCode().equals(KeyCode.ENTER)) {
+                formulaInputMode = false;
+                var pos = getFocusedCellPos();
+                if (pos != null) {
+                    try {
+                        setCellContent(pos.getRow(), pos.getColumn() - 1, formulaBar.getText());
+                    } catch (FormulaParseException e) {
+                        showAlert("Invalid formula", formulaBar.getText() + " is an invalid formula");
+                    }
+                }
+            }
+        });
+        formulaBar.focusedProperty().addListener((observable, oldVal, newVal) -> {
+            if (!newVal) {
+                formulaInputMode = false;
+                formulaBarContent.set("");
+            }
+        });
+        /* Update cell content when editing formula bar */
+        formulaBar.textProperty().addListener((observable, oldVal, newVal) -> {
+            var pos = getFocusedCellPos();
+            if (pos == null) {
+                return;
+            }
+            if (pos.getRow() >= 0 && pos.getColumn() >= 1) {
+                if (!newVal.equals(formulaBarContent.get())) {
+                    formulaInputMode = newVal.startsWith("=");
+                    try {
+                        setCellContent(pos.getRow(), pos.getColumn() - 1, newVal);
+                    } catch (FormulaParseException e) {
+                        if (!formulaInputMode) {
+                            throw e;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     @FXML
@@ -61,15 +129,11 @@ public class TableController {
         table.getSelectionModel().setCellSelectionEnabled(true);
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.setItems(tableRows);
-        /*
-         * Let the formula bar update cell only with user's input.
-         * trick: https://stackoverflow.com/questions/28421122
-         */
-        formulaBarDisplay.addListener((observable, oldVal, newVal) -> formulaBar.setText(newVal));
+        initializeFormulaBar();
     }
 
-    void drawRowIDColumn(int numRow) {
-        rowIDColumn.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(0).getValueStringProperty());
+    void drawRowIDColumn() {
+        rowIDColumn.setCellValueFactory(p -> p.getValue().getRowIDProperty());
         rowIDColumn.setCellFactory(p -> {
             var cell = new TableCell<TableRowModel, String>() {
                 @Override
@@ -83,28 +147,27 @@ public class TableController {
                 }
             };
             cell.getStyleClass().clear();
-            cell.getStyleClass().add("rowid-cell");
+            cell.getStyleClass().add("rowID-cell");
             return cell;
         });
     }
 
     void drawSheet() {
+        tableRows.clear();
         var sheet = workbook.getCurrentSheet();
-        int maxColumnNum = 0;
         /* create rows */
-        for (int r = 1; r <= sheet.getLastRowNum() + 1; r++) {
-            var row = sheet.getRow(r - 1);
-            tableRows.add(new TableRowModel(row, r));
-            maxColumnNum = Math.max(row.getLastCellNum(), maxColumnNum);
+        for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+            var row = sheet.getRow(r);
+            tableRows.add(new TableRowModel(row, r + 1));
         }
         /* create columns */
-        drawColumns(maxColumnNum);
+        refreshColumns(workbook.maxColumnNum());
     }
 
     private void drawColumns(int columnNum) {
-        drawRowIDColumn(workbook.getCurrentSheet().getLastRowNum());
-        for (int c = 1; c <= columnNum; c++) {
-            var columnName = CellReference.convertNumToColString(c - 1);
+        drawRowIDColumn();
+        for (int c = 0; c < columnNum; c++) {
+            var columnName = CellReference.convertNumToColString(c);
             addColumn(columnName, c);
         }
     }
@@ -113,28 +176,42 @@ public class TableController {
         this.workbook = workbook;
         drawSheet();
         /* Delay the initialization here to make sure all cells are initialized. */
-        /* Update cell content when editing formula bar */
-        formulaBar.textProperty().addListener((observable, oldVal, newVal) -> {
-            var pos = table.getFocusModel().getFocusedCell();
-            if (!newVal.equals(formulaBarDisplay.get())) {
-                setCellContent(pos.getRow(), pos.getColumn(), newVal);
-            }
-        });
         /* display content on formula bar when the cell is selected */
         table.getFocusModel().focusedCellProperty().addListener((observable, oldPos, newPos) -> {
-            if ((newPos.getRow() != -1) && (newPos.getColumn() != -1)) {
-                var selectedValue = getCellContent(newPos.getRow(), newPos.getColumn());
-                formulaBarDisplay.set(selectedValue);
+            if ((newPos.getRow() != -1) && (newPos.getColumn() > 0)) {
+                String displayContent;
+                var cell = getCell(newPos.getRow(), newPos.getColumn() - 1);
+                if (cell.isFormulaCell()) {
+                    displayContent = "=" + cell.getCellFormula();
+                } else {
+                    displayContent = cell.getValueString();
+                }
+                formulaBarContent.set(displayContent);
             }
         });
     }
 
-    public void setCellContent(int rowID, int colID, String content) {
-        getCell(rowID, colID).setValue(content);
+    void showAlert(String header, String message) {
+        var alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("ERROR");
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+        alert.show();
     }
 
-    public String getCellContent(int rowID, int colID) {
-        return getCell(rowID, colID).getValueString();
+    void evaluateAll() {
+        workbook.evaluateAll();
+        // update all cells
+        for (var row : tableRows) {
+            for (int c = 0; c < row.getNumberOfCells(); c++) {
+                row.getCell(c).updateFromCell();
+            }
+        }
+    }
+
+    public void setCellContent(int rowID, int colID, String content) throws FormulaParseException {
+        getCell(rowID, colID).setValue(content);
+        evaluateAll();
     }
 
     private TableCellModel getCell(int rowID, int colID) {
@@ -143,7 +220,11 @@ public class TableController {
 
     @SuppressWarnings({"rawtypes"})
     private TablePosition getFocusedCellPos() {
-        var pos = table.getFocusModel().focusedCellProperty().get();
+        /*
+         * Using table.getFocusModel().focusedCellProperty().get(); will return -1 when column is inserted.
+         * Current call will clear the focus after column insertion
+         */
+        var pos = table.getFocusModel().getFocusedCell();
         if (pos.getRow() < 0 || pos.getColumn() < 0) {
             return null;
         } else {
@@ -151,28 +232,156 @@ public class TableController {
         }
     }
 
-    public void insertRow() {
+    public void insertRow(MouseEvent event) {
         var focusedPos = getFocusedCellPos();
-        int insertPos = Objects.requireNonNull(focusedPos).getRow() + 1;
+        if (focusedPos == null) {
+            return;
+        }
+        int insertPos = focusedPos.getRow();
+        if (event.getSource() == buttonInsertBelow) {
+            insertPos += 1;
+        }
         var newRow = workbook.insertRow(insertPos);
         tableRows.add(insertPos, new TableRowModel(newRow, insertPos + 1));
-        for (int r = insertPos + 1; r < tableRows.size(); r++) {
-            tableRows.get(r).getCell(0).setValueString(String.valueOf(r + 1));
-        }
+        refreshRowID();
     }
 
-    public void insertColumn() { // FIXME: Error when insert column from the same position twice
+    public void insertColumn(MouseEvent event) {
         var focusedPos = getFocusedCellPos();
-        int insertPos = Objects.requireNonNull(focusedPos).getColumn() + 1;
+        if (focusedPos == null) {
+            return;
+        }
+        int insertPos = focusedPos.getColumn(); // insertPos is the one after the focused
+        if (event.getSource() == buttonInsertLeft) {
+            insertPos -= 1;
+        }
         var addedCells = workbook.insertColumn(insertPos);
         for (int r = 0; r < tableRows.size(); r++) {
             tableRows.get(r).addCell(new TableCellModel(addedCells.get(r)), insertPos);
         }
-        int numColumns = table.getColumns().size();
-        table.getColumns().clear();
+        refreshColumns(getColumnNum() + 1);
+    }
+
+    /*
+    * Return the number of data columns so the rowID column is not counted.
+    */
+    private int getColumnNum() {
+        return table.getColumns().size() - 1;
+    }
+
+    private void refreshColumns(int columnNum) {
         /* Redraw all columns */
+        /* TODO: Resize the columns when deleted. */
+        table.getColumns().clear();
         table.getColumns().add(rowIDColumn);
-        drawColumns(numColumns);
+        drawColumns(columnNum);
+    }
+
+    public void deleteColumn() {
+        var focusedPos = getFocusedCellPos();
+        if (focusedPos == null) {
+            return;
+        }
+        int deletedPos = focusedPos.getColumn() - 1;
+        workbook.deleteColumn(deletedPos);
+        for (var tableRow : tableRows) {
+            tableRow.removeCell(deletedPos);
+        }
+        refreshColumns(getColumnNum() - 1);
+    }
+
+    public void deleteRow() {
+        var focusedPos = getFocusedCellPos();
+        if (focusedPos == null) {
+            return;
+        }
+        int deletedPos = focusedPos.getRow();
+        workbook.deleteRow(deletedPos);
+        tableRows.remove(deletedPos);
+        refreshRowID();
+    }
+
+    private void refreshRowID() {
+        for (int r = 0; r < tableRows.size(); r++) {
+            tableRows.get(r).setRowID(r + 1);
+        }
+    }
+
+    public void copyCell() {
+        this.cellRegister = getFocusedCell();
+    }
+
+    public void clearCell() {
+        var cell = getFocusedCell();
+        cell.setValue("");
+        evaluateAll();
+    }
+
+    private TableCellModel getFocusedCell() {
+        var pos = table.getFocusModel().getFocusedCell();
+        return getCell(pos.getRow(), pos.getColumn() - 1);
+    }
+
+    public void pasteCell() {
+        var cell = getFocusedCell();
+        if (cellRegister.isFormulaCell()) {
+            cell.setValue("=" + cellRegister.getCellFormula());
+        } else {
+            cell.setValue(cellRegister.getValueString());
+        }
+        evaluateAll();
+    }
+
+    public void menuAboutAction() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("About");
+        alert.setHeaderText("This software");
+        alert.setContentText("42");
+        alert.show();
+    }
+
+    public void menuQuitAction() {
+
+    }
+
+    public void menuSaveAction() {
+
+    }
+
+    public void menuSaveAsAction() {
+
+    }
+
+    public void menuOpenAction() {
+        var fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Spreadsheet");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Excel workbook", "*.xlsx"), new FileChooser.ExtensionFilter("Excel 97-2003 workbook", "*.xls"), new FileChooser.ExtensionFilter("CSV (Comma delimited)", "*.csv"));
+        var file = fileChooser.showOpenDialog(stage);
+        if (file == null) { // cancel open
+            return;
+        }
+        var fileName = file.getName();
+        try {
+            POIWorkbook workbook;
+            if (file.getName().endsWith("csv")) {
+                workbook = POIWorkbookFactory.fromCSVFile(file);
+            } else {
+                workbook = POIWorkbookFactory.fromExcelFile(file);
+            }
+            setWorkbook(workbook);
+        } catch (IOException e) {
+            showAlert("File open failed", "Unable to open " + fileName);
+        } catch (CsvException e) {
+            showAlert("File open failed", fileName + " is not a valid CSV file");
+        }
+    }
+
+    public void menuNewAction() {
+
+    }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 }
 
