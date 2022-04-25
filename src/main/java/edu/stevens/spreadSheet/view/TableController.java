@@ -1,6 +1,8 @@
 package edu.stevens.spreadSheet.view;
 
+import com.opencsv.exceptions.CsvException;
 import edu.stevens.spreadSheet.model.POIWorkbook;
+import edu.stevens.spreadSheet.model.POIWorkbookFactory;
 import edu.stevens.spreadSheet.model.TableCellModel;
 import edu.stevens.spreadSheet.model.TableRowModel;
 import javafx.beans.property.SimpleStringProperty;
@@ -10,8 +12,12 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.util.CellReference;
+
+import java.io.IOException;
 
 
 public class TableController {
@@ -37,6 +43,7 @@ public class TableController {
     @FXML
     private Button buttonInsertRight;
     private TableCellModel cellRegister;
+    private Stage stage;
 
     public TableController() {
 
@@ -44,7 +51,7 @@ public class TableController {
 
     private void addColumn(String name, int index) {
         var column = new TableColumn<TableRowModel, String>(name);
-        column.setCellValueFactory(p -> p.getValue().getCellOrCreateEmpty(index - 1).getValueStringProperty());
+        column.setCellValueFactory(p -> p.getValue().getCell(index).getValueStringProperty());
         column.setCellFactory(p -> new EditableTableCell<>());
         column.setOnEditCommit((TableColumn.CellEditEvent<TableRowModel, String> t) -> {
             int rowID = t.getTablePosition().getRow();
@@ -62,7 +69,7 @@ public class TableController {
         column.setPrefWidth(75);
         column.setSortable(false);
         column.setReorderable(false); // Column drag and drop is disabled for now
-        table.getColumns().add(index, column);
+        table.getColumns().add(index + 1, column);
     }
 
     void initializeFormulaBar() {
@@ -125,7 +132,7 @@ public class TableController {
         initializeFormulaBar();
     }
 
-    void drawRowIDColumn(int numRow) {
+    void drawRowIDColumn() {
         rowIDColumn.setCellValueFactory(p -> p.getValue().getRowIDProperty());
         rowIDColumn.setCellFactory(p -> {
             var cell = new TableCell<TableRowModel, String>() {
@@ -146,22 +153,21 @@ public class TableController {
     }
 
     void drawSheet() {
+        tableRows.clear();
         var sheet = workbook.getCurrentSheet();
-        int maxColumnNum = 0;
         /* create rows */
-        for (int r = 1; r <= sheet.getLastRowNum() + 1; r++) {
-            var row = sheet.getRow(r - 1);
-            tableRows.add(new TableRowModel(row, r));
-            maxColumnNum = Math.max(row.getLastCellNum(), maxColumnNum);
+        for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+            var row = sheet.getRow(r);
+            tableRows.add(new TableRowModel(row, r + 1));
         }
         /* create columns */
-        drawColumns(maxColumnNum);
+        refreshColumns(workbook.maxColumnNum());
     }
 
     private void drawColumns(int columnNum) {
-        drawRowIDColumn(workbook.getCurrentSheet().getLastRowNum());
-        for (int c = 1; c <= columnNum; c++) {
-            var columnName = CellReference.convertNumToColString(c - 1);
+        drawRowIDColumn();
+        for (int c = 0; c < columnNum; c++) {
+            var columnName = CellReference.convertNumToColString(c);
             addColumn(columnName, c);
         }
     }
@@ -176,7 +182,7 @@ public class TableController {
                 String displayContent;
                 var cell = getCell(newPos.getRow(), newPos.getColumn() - 1);
                 if (cell.isFormulaCell()) {
-                    displayContent = "=" + cell.getPOICell().getCellFormula();
+                    displayContent = "=" + cell.getCellFormula();
                 } else {
                     displayContent = cell.getValueString();
                 }
@@ -232,8 +238,7 @@ public class TableController {
             return;
         }
         int insertPos = focusedPos.getRow();
-        var button = (Button) event.getSource();
-        if (button == buttonInsertBelow) {
+        if (event.getSource() == buttonInsertBelow) {
             insertPos += 1;
         }
         var newRow = workbook.insertRow(insertPos);
@@ -247,20 +252,26 @@ public class TableController {
             return;
         }
         int insertPos = focusedPos.getColumn(); // insertPos is the one after the focused
-        var button = (Button) event.getSource();
-        if (button == buttonInsertLeft) {
+        if (event.getSource() == buttonInsertLeft) {
             insertPos -= 1;
         }
         var addedCells = workbook.insertColumn(insertPos);
         for (int r = 0; r < tableRows.size(); r++) {
             tableRows.get(r).addCell(new TableCellModel(addedCells.get(r)), insertPos);
         }
-        refreshColumns();
+        refreshColumns(getColumnNum() + 1);
     }
 
-    private void refreshColumns() {
+    /*
+    * Return the number of data columns so the rowID column is not counted.
+    */
+    private int getColumnNum() {
+        return table.getColumns().size() - 1;
+    }
+
+    private void refreshColumns(int columnNum) {
         /* Redraw all columns */
-        var columnNum = table.getColumns().size();
+        /* TODO: Resize the columns when deleted. */
         table.getColumns().clear();
         table.getColumns().add(rowIDColumn);
         drawColumns(columnNum);
@@ -276,7 +287,7 @@ public class TableController {
         for (var tableRow : tableRows) {
             tableRow.removeCell(deletedPos);
         }
-        refreshColumns();
+        refreshColumns(getColumnNum() - 1);
     }
 
     public void deleteRow() {
@@ -314,7 +325,7 @@ public class TableController {
     public void pasteCell() {
         var cell = getFocusedCell();
         if (cellRegister.isFormulaCell()) {
-            cell.setValue("=" + cellRegister.getPOICell().getCellFormula());
+            cell.setValue("=" + cellRegister.getCellFormula());
         } else {
             cell.setValue(cellRegister.getValueString());
         }
@@ -327,6 +338,50 @@ public class TableController {
         alert.setHeaderText("This software");
         alert.setContentText("42");
         alert.show();
+    }
+
+    public void menuQuitAction() {
+
+    }
+
+    public void menuSaveAction() {
+
+    }
+
+    public void menuSaveAsAction() {
+
+    }
+
+    public void menuOpenAction() {
+        var fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Spreadsheet");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Excel workbook", "*.xlsx"), new FileChooser.ExtensionFilter("Excel 97-2003 workbook", "*.xls"), new FileChooser.ExtensionFilter("CSV (Comma delimited)", "*.csv"));
+        var file = fileChooser.showOpenDialog(stage);
+        if (file == null) { // cancel open
+            return;
+        }
+        var fileName = file.getName();
+        try {
+            POIWorkbook workbook;
+            if (file.getName().endsWith("csv")) {
+                workbook = POIWorkbookFactory.fromCSVFile(file);
+            } else {
+                workbook = POIWorkbookFactory.fromExcelFile(file);
+            }
+            setWorkbook(workbook);
+        } catch (IOException e) {
+            showAlert("File open failed", "Unable to open " + fileName);
+        } catch (CsvException e) {
+            showAlert("File open failed", fileName + " is not a valid CSV file");
+        }
+    }
+
+    public void menuNewAction() {
+
+    }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 }
 

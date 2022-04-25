@@ -36,8 +36,7 @@ public class TableCellModel {
     public void setValue(String value) {
         if (value.length() == 0) {
             POICell.setBlank();
-        }
-        if (NumberUtils.isParsable(value)) {
+        } else if (NumberUtils.isParsable(value)) {
             POICell.setCellValue(Double.parseDouble(value));
         } else if ("false".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value)) {
             POICell.setCellValue(Boolean.parseBoolean(value));
@@ -49,16 +48,8 @@ public class TableCellModel {
         setValueString(getStringFromCell(POICell.getCellType()));
     }
 
-    public boolean isBlank() {
-        return getValueString().length() == 0;
-    }
-
     public boolean isFormulaCell() {
         return POICell.getCellType() == FORMULA;
-    }
-
-    public Cell getPOICell() {
-        return POICell;
     }
 
     public void updateFromCell() {
@@ -70,7 +61,7 @@ public class TableCellModel {
         return valueString.get();
     }
 
-    public void setValueString(String value) {
+    private void setValueString(String value) {
         valueString.set(value);
     }
 
@@ -80,7 +71,7 @@ public class TableCellModel {
 
     public String toString() {
         if (POICell == null) {
-            return "Non-valid cell";
+            return "Invalid cell";
         }
         String valueString;
         switch (POICell.getCellType()) {
@@ -92,6 +83,11 @@ public class TableCellModel {
             default -> valueString = "BLANK";
         }
         return valueString;
+    }
+
+    public String getCellFormula() {
+        assert isFormulaCell() : "This is not a formula cell.";
+        return POICell.getCellFormula();
     }
 }
 

@@ -42,18 +42,16 @@
       <menus>
         <Menu mnemonicParsing="false" text="File">
           <items>
-            <MenuItem mnemonicParsing="false" text="New" />
-            <MenuItem mnemonicParsing="false" text="Open…" />
-            <Menu mnemonicParsing="false" text="Open Recent" />
+            <MenuItem mnemonicParsing="false" onAction="#menuNewAction" text="New" />
+            <MenuItem mnemonicParsing="false" onAction="#menuOpenAction" text="Open…" />
             <SeparatorMenuItem mnemonicParsing="false" />
-            <MenuItem mnemonicParsing="false" text="Close" />
-            <MenuItem mnemonicParsing="false" text="Save" />
-            <MenuItem mnemonicParsing="false" text="Save As…" />
+            <MenuItem mnemonicParsing="false" onAction="#menuSaveAction" text="Save" />
+            <MenuItem mnemonicParsing="false" onAction="#menuSaveAsAction" text="Save As…" />
 <!--            <MenuItem mnemonicParsing="false" text="Revert" />-->
             <SeparatorMenuItem mnemonicParsing="false" />
 <!--            <MenuItem mnemonicParsing="false" text="Preferences…" />-->
 <!--            <SeparatorMenuItem mnemonicParsing="false" />-->
-            <MenuItem mnemonicParsing="false" text="Quit" />
+            <MenuItem mnemonicParsing="false" onAction="#menuQuitAction" text="Quit" />
           </items>
         </Menu>
 <!--        <Menu mnemonicParsing="false" text="Edit">-->
@@ -140,7 +138,7 @@
       <TextField fx:id="formulaBar" maxHeight="25.0" maxWidth="1.7976931348623157E308" minHeight="25.0" prefHeight="25.0" />
     <TabPane prefHeight="200.0" prefWidth="200.0" side="BOTTOM" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
       <tabs>
-        <Tab text="Untitled Tab 1">
+        <Tab text="Sheet1">
           <content>
             <AnchorPane>
               <children>

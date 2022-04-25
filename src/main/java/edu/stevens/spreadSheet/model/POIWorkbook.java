@@ -23,7 +23,7 @@ public class POIWorkbook {
         return currentSheet;
     }
 
-    private int maxColumnNum() {
+    public int maxColumnNum() {
         int result = 0;
         for (var row : getCurrentSheet()) {
             result = Math.max(result, row.getLastCellNum());
@@ -46,7 +46,7 @@ public class POIWorkbook {
         int currentCellNum = maxColumnNum();
         assert pos <= currentCellNum : "Inserted column must be neighbors of existing columns";
         if (currentCellNum > pos) {
-            currentSheet.shiftColumns(pos, currentCellNum, 1);
+            currentSheet.shiftColumns(pos, currentCellNum - 1, 1);
         }
         List<Cell> addedCells = new ArrayList<>();
         for (var row : currentSheet) {
@@ -66,7 +66,7 @@ public class POIWorkbook {
     }
 
     public void deleteColumn(int pos) {
-        currentSheet.shiftColumns(pos + 1, maxColumnNum(), -1);
+        currentSheet.shiftColumns(pos + 1, maxColumnNum() - 1, -1);
     }
 }
 
