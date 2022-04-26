@@ -8,7 +8,7 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class TableRowModel {
     private final ObservableList<TableCellModel> cells = FXCollections.observableArrayList();
-    private final SimpleStringProperty rowID = new SimpleStringProperty("0");
+    private final SimpleStringProperty rowID = new SimpleStringProperty();
 
     public TableRowModel(Row POIRow, int rowID) {
         this.rowID.set(String.valueOf(rowID));
