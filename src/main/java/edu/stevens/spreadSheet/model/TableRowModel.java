@@ -7,21 +7,11 @@ import javafx.collections.ObservableList;
 import org.apache.poi.ss.usermodel.Row;
 
 public class TableRowModel {
-    private final ObservableList<TableCellModel> cells;
-    private Row POIRow = null;
-    private final SimpleStringProperty rowID = new SimpleStringProperty("0");
-
-    public TableRowModel(int numberOfCells) {
-        this.cells = FXCollections.observableArrayList();
-        for (int i = 0; i < numberOfCells; i++) {
-            cells.add(new TableCellModel(""));
-        }
-    }
+    private final ObservableList<TableCellModel> cells = FXCollections.observableArrayList();
+    private final SimpleStringProperty rowID = new SimpleStringProperty();
 
     public TableRowModel(Row POIRow, int rowID) {
         this.rowID.set(String.valueOf(rowID));
-        this.POIRow = POIRow;
-        this.cells = FXCollections.observableArrayList();
         for (int i = 0; i < POIRow.getLastCellNum(); i++) {
             cells.add(new TableCellModel(POIRow.getCell(i)));
         }
@@ -36,14 +26,6 @@ public class TableRowModel {
             throw new IllegalArgumentException("index must be non-negative");
         }
         return cells.get(index);
-    }
-
-    public TableCellModel getCellOrCreateEmpty(int index) {
-        for (int i = 0; i <= index - getNumberOfCells(); i++) {
-            var cell = POIRow.createCell(i);
-            cells.add(new TableCellModel(cell));
-        }
-        return getCell(index);
     }
 
     public SimpleStringProperty getRowIDProperty() {
