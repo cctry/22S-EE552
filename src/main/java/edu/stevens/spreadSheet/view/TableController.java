@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.util.CellReference;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 
@@ -340,16 +341,37 @@ public class TableController {
         alert.show();
     }
 
-    public void menuQuitAction() {
-
+    public void menuQuitAction() throws IOException {
+        workbook.close();
     }
 
     public void menuSaveAction() {
-
+        try {
+            if (workbook.file == null) {
+                menuSaveAsAction();
+            } else {
+                workbook.write(workbook.file);
+                workbook.file.close();
+            }
+        } catch (IOException e) {
+            showAlert("File save failed", "Unable to open " + workbook.file);
+        }
     }
 
     public void menuSaveAsAction() {
-
+        var fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Spreadsheet");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Excel workbook", "*.xlsx"), new FileChooser.ExtensionFilter("Excel 97-2003 workbook", "*.xls"), new FileChooser.ExtensionFilter("CSV (Comma delimited)", "*.csv"));
+        var file = fileChooser.showSaveDialog(stage);
+        var fileName = file.getAbsolutePath();
+        try {
+            FileOutputStream fileOut = new FileOutputStream(fileName);
+            workbook.write(fileOut);
+            workbook.setFile(fileOut);
+            fileOut.close();
+        } catch (IOException e) {
+            showAlert("File save failed", "Unable to open " + fileName);
+        }
     }
 
     public void menuOpenAction() {

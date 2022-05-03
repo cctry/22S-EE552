@@ -1,14 +1,18 @@
 package edu.stevens.spreadSheet.model;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.application.Platform;
 import org.apache.poi.ss.usermodel.*;
 
 public class POIWorkbook {
     final Workbook workbook;
     final FormulaEvaluator formulaEvaluator;
     Sheet currentSheet;
+    public FileOutputStream file = null;
 
     public POIWorkbook(Workbook workbook) {
         this.workbook = workbook;
@@ -59,6 +63,20 @@ public class POIWorkbook {
     public void evaluateAll() {
         formulaEvaluator.clearAllCachedResultValues();
         formulaEvaluator.evaluateAll();
+    }
+
+    public void write(FileOutputStream file) throws IOException {
+        workbook.write(file);
+    }
+
+    public void close() {
+        Platform.exit();
+    }
+
+    public void setFile(FileOutputStream fileName){
+        if (this.file == null){
+            file = fileName;
+        }
     }
 
     public void deleteRow(int pos) {
