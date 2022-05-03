@@ -12,7 +12,7 @@ public class POIWorkbook {
     final Workbook workbook;
     final FormulaEvaluator formulaEvaluator;
     Sheet currentSheet;
-    public FileOutputStream file = null;
+    public String file = null;
 
     public POIWorkbook(Workbook workbook) {
         this.workbook = workbook;
@@ -73,7 +73,7 @@ public class POIWorkbook {
         Platform.exit();
     }
 
-    public void setFile(FileOutputStream fileName){
+    public void setFile(String fileName){
         if (this.file == null){
             file = fileName;
         }

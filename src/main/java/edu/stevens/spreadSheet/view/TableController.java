@@ -350,8 +350,9 @@ public class TableController {
             if (workbook.file == null) {
                 menuSaveAsAction();
             } else {
-                workbook.write(workbook.file);
-                workbook.file.close();
+                FileOutputStream fileOS = new FileOutputStream(workbook.file);
+                workbook.write(fileOS);
+                fileOS.close();
             }
         } catch (IOException e) {
             showAlert("File save failed", "Unable to open " + workbook.file);
@@ -364,10 +365,10 @@ public class TableController {
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Excel workbook", "*.xlsx"), new FileChooser.ExtensionFilter("Excel 97-2003 workbook", "*.xls"), new FileChooser.ExtensionFilter("CSV (Comma delimited)", "*.csv"));
         var file = fileChooser.showSaveDialog(stage);
         var fileName = file.getAbsolutePath();
+        workbook.setFile(fileName);
         try {
             FileOutputStream fileOut = new FileOutputStream(fileName);
             workbook.write(fileOut);
-            workbook.setFile(fileOut);
             fileOut.close();
         } catch (IOException e) {
             showAlert("File save failed", "Unable to open " + fileName);
