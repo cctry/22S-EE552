@@ -69,6 +69,10 @@ public class POIWorkbook {
         workbook.write(file);
     }
 
+    public CellStyle initializeCS(){
+        return workbook.createCellStyle();
+    }
+
     public void close() {
         Platform.exit();
     }

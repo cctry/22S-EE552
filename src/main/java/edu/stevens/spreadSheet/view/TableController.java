@@ -16,7 +16,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.util.CellReference;
-
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -43,6 +43,12 @@ public class TableController {
     private Button buttonInsertLeft;
     @FXML
     private Button buttonInsertRight;
+    @FXML
+    private Button leftAlign;
+    @FXML
+    private Button centerAlign;
+    @FXML
+    private Button rightAlign;
     private TableCellModel cellRegister;
     private Stage stage;
 
@@ -333,6 +339,26 @@ public class TableController {
         evaluateAll();
     }
 
+    public void setCellAlignment(MouseEvent event){
+        System.out.println(event.getSource());
+        var cell = getFocusedCell();
+        if(cell.getCellStyle() == null){
+            cell.setPOICellStyle(workbook.initializeCS());
+        }
+        if(event.getSource() == leftAlign){
+            cell.getCellStyle().setAlignment(HorizontalAlignment.LEFT);
+            System.out.println(cell.getCellStyle().getAlignment().toString());
+        }
+        else if(event.getSource() == centerAlign){
+            cell.getCellStyle().setAlignment(HorizontalAlignment.CENTER);
+            System.out.println(cell.getCellStyle().getAlignment().toString());
+        }
+        else if(event.getSource() == rightAlign){
+            cell.getCellStyle().setAlignment(HorizontalAlignment.RIGHT);
+            System.out.println(cell.getCellStyle().getAlignment().toString());
+        }
+    }
+
     public void menuAboutAction() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About");
@@ -362,7 +388,7 @@ public class TableController {
     public void menuSaveAsAction() {
         var fileChooser = new FileChooser();
         fileChooser.setTitle("Save Spreadsheet");
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Excel workbook", "*.xlsx"), new FileChooser.ExtensionFilter("Excel 97-2003 workbook", "*.xls"), new FileChooser.ExtensionFilter("CSV (Comma delimited)", "*.csv"));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Excel 97-2003 workbook", "*.xls"), new FileChooser.ExtensionFilter("CSV (Comma delimited)", "*.csv"));
         var file = fileChooser.showSaveDialog(stage);
         var fileName = file.getAbsolutePath();
         workbook.setFile(fileName);
@@ -384,6 +410,7 @@ public class TableController {
             return;
         }
         var fileName = file.getName();
+        workbook.setFile(file.getAbsolutePath());
         try {
             POIWorkbook workbook;
             if (file.getName().endsWith("csv")) {

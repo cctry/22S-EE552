@@ -3,6 +3,7 @@ package edu.stevens.spreadSheet.model;
 import javafx.beans.property.SimpleStringProperty;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 
@@ -11,7 +12,7 @@ import static org.apache.poi.ss.usermodel.CellType.FORMULA;
 public class TableCellModel {
     private final SimpleStringProperty valueString;
     private final Cell POICell;
-
+    private CellStyle POICellStyle;
     public TableCellModel(Cell POICell) {
         this.POICell = POICell;
         assert !DateUtil.isCellDateFormatted(POICell) : "Date value is not supported.";
@@ -28,7 +29,14 @@ public class TableCellModel {
         };
     }
 
+    public void setPOICellStyle(CellStyle cellStyle){
+        this.POICellStyle = cellStyle;
+        this.POICell.setCellStyle(this.POICellStyle);
+    }
 
+    public CellStyle getCellStyle(){
+        return this.POICellStyle;
+    }
     public void setValue(String value) {
         if (value.length() == 0) {
             POICell.setBlank();

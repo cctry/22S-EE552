@@ -126,14 +126,30 @@
                <children>
                   <HBox spacing="8.0">
                      <children>
-                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#clearCell" prefWidth="60.0" text="Clear" textAlignment="JUSTIFY" />
-                        <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#copyCell" prefWidth="60.0" text="Copy" />
-                        <Button layoutX="75.0" layoutY="10.0" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#pasteCell" prefWidth="60.0" text="Paste" />
+                        <Button fx:id="leftAlign" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#setCellAlignment" prefWidth="60.0" text="Left" textAlignment="JUSTIFY" />
+                        <Button fx:id="centerAlign" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#setCellAlignment" prefWidth="60.0" text="Center" />
+                        <Button fx:id="rightAlign" layoutX="75.0" layoutY="10.0" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#setCellAlignment" prefWidth="60.0" text="Right" />
                      </children>
                   </HBox>
-                  <Label text="Edit" />
+                  <Label text="Align" />
                </children>
             </VBox>
+             <Separator orientation="VERTICAL" prefHeight="200.0" />
+             <VBox alignment="CENTER" spacing="3.0">
+                 <padding>
+                     <Insets left="5.0" right="5.0" top="5.0" />
+                 </padding>
+                 <children>
+                     <HBox spacing="8.0">
+                         <children>
+                             <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#clearCell" prefWidth="60.0" text="Clear" textAlignment="JUSTIFY" />
+                             <Button maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#copyCell" prefWidth="60.0" text="Copy" />
+                             <Button layoutX="75.0" layoutY="10.0" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#pasteCell" prefWidth="60.0" text="Paste" />
+                         </children>
+                     </HBox>
+                     <Label text="Edit" />
+                 </children>
+             </VBox>
          </children>
       </HBox>
       <TextField fx:id="formulaBar" maxHeight="25.0" maxWidth="1.7976931348623157E308" minHeight="25.0" prefHeight="25.0" />
