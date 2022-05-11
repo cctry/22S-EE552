@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -49,6 +50,14 @@ public class TableController {
     private Button centerAlign;
     @FXML
     private Button rightAlign;
+    @FXML
+    private Button topBorder;
+    @FXML
+    private Button bottomBorder;
+    @FXML
+    private Button leftBorder;
+    @FXML
+    private Button rightBorder;
     private TableCellModel cellRegister;
     private Stage stage;
 
@@ -359,6 +368,37 @@ public class TableController {
         }
     }
 
+    public void setBorder(MouseEvent event){
+        var cell = getFocusedCell();
+        if(cell.getCellStyle() == null){
+            cell.setPOICellStyle(workbook.initializeCS());
+        }
+        if(event.getSource() == topBorder){
+            if (cell.getCellStyle().getBorderTop() == BorderStyle.NONE){
+                cell.getCellStyle().setBorderTop(BorderStyle.MEDIUM);
+            }
+            else cell.getCellStyle().setBorderTop(BorderStyle.NONE);
+        }
+        else if(event.getSource() == bottomBorder){
+            if (cell.getCellStyle().getBorderBottom() == BorderStyle.NONE){
+                cell.getCellStyle().setBorderBottom(BorderStyle.MEDIUM);
+            }
+            else cell.getCellStyle().setBorderBottom(BorderStyle.NONE);
+        }
+        else if(event.getSource() == leftBorder){
+            if (cell.getCellStyle().getBorderLeft() == BorderStyle.NONE){
+                cell.getCellStyle().setBorderLeft(BorderStyle.MEDIUM);
+            }
+            else cell.getCellStyle().setBorderLeft(BorderStyle.NONE);
+        }
+        else if(event.getSource() == rightBorder){
+            if (cell.getCellStyle().getBorderRight() == BorderStyle.NONE){
+                cell.getCellStyle().setBorderRight(BorderStyle.MEDIUM);
+            }
+            else cell.getCellStyle().setBorderRight(BorderStyle.NONE);
+        }
+    }
+
     public void menuAboutAction() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About");
@@ -367,7 +407,7 @@ public class TableController {
         alert.show();
     }
 
-    public void menuQuitAction() throws IOException {
+    public void menuQuitAction() {
         workbook.close();
     }
 

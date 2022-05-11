@@ -150,6 +150,31 @@
                      <Label text="Edit" />
                  </children>
              </VBox>
+             <Separator orientation="VERTICAL" prefHeight="200.0" />
+             <VBox alignment="CENTER" spacing="3.0">
+                 <padding>
+                     <Insets left="20.0" right="20.0" top="5.0" />
+                 </padding>
+                 <children>
+                 <HBox spacing="8.0">
+                    <children>
+                         <VBox spacing="4.0">
+                             <children>
+                                 <Button fx:id="topBorder" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#setBorder" text="Top" textAlignment="JUSTIFY" />
+                                 <Button fx:id="bottomBorder" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#setBorder" text="Bottom" />
+                             </children>
+                         </VBox>
+                        <VBox spacing="4.0">
+                            <children>
+                                <Button fx:id="leftBorder" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#setBorder" text="Left" textAlignment="JUSTIFY" />
+                                <Button fx:id="rightBorder" maxWidth="3000.0" mnemonicParsing="false" onMouseClicked="#setBorder" text="Right" />
+                            </children>
+                        </VBox>
+                    </children>
+                 </HBox>
+                 <Label text="Borders" />
+                 </children>
+             </VBox>
          </children>
       </HBox>
       <TextField fx:id="formulaBar" maxHeight="25.0" maxWidth="1.7976931348623157E308" minHeight="25.0" prefHeight="25.0" />
